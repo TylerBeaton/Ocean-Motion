@@ -39,8 +39,19 @@
 # Jetbrains Rider personal-layer settings
 *.DotSettings.user
 
+# OS and editor-local files
+.DS_Store
+.vscode/
+
 # Visual Studio cache directory
 .vs/
+
+# Unity/IDE-generated solution files
+*.slnx
+
+# Duplicate settings files created locally; canonical files are tracked.
+/ProjectSettings/ProjectAuditorSettings 2.asset
+/ProjectSettings/ShaderGraphSettings 2.asset
 
 # Gradle cache directory
 .gradle/
