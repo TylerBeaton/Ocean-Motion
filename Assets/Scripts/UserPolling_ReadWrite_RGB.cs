@@ -6,7 +6,7 @@ public class UserPolling_ReadWrite_RGB : MonoBehaviour
     [SerializeField] private Material material;
 
     [SerializeField] private float cycleDuration = 5f;
-    [SerializeField] private float serialUpdatesPerSecond = 5f;
+    [SerializeField] private float serialUpdatesPerSecond = 15f;
 
     private float nextSerialUpdate;
     private bool connected;
