@@ -113,6 +113,17 @@ public abstract class AbstractSerialThread
         outputQueue.Enqueue(message);
     }
 
+    // Replaces pending state messages with the newest value. This prevents
+    // real-time telemetry from accumulating an increasingly stale backlog.
+    public void SendLatestMessage(object message)
+    {
+        lock (outputQueue.SyncRoot)
+        {
+            outputQueue.Clear();
+            outputQueue.Enqueue(message);
+        }
+    }
+
 
     /**************************************************************************
      * Methods intended to be invoked from the SerialComm thread (the one
@@ -238,10 +249,20 @@ public abstract class AbstractSerialThread
     {
         try
         {
-            // Send a message.
-            if (outputQueue.Count != 0)
+            // Dequeue atomically because the Unity thread may replace pending
+            // state messages at the same time.
+            object outputMessage = null;
+            lock (outputQueue.SyncRoot)
             {
-                SendToWire(outputQueue.Dequeue(), serialPort);
+                if (outputQueue.Count != 0)
+                {
+                    outputMessage = outputQueue.Dequeue();
+                }
+            }
+
+            if (outputMessage != null)
+            {
+                SendToWire(outputMessage, serialPort);
             }
 
             // Read a message.
