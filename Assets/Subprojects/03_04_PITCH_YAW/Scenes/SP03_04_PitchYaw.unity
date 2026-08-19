@@ -842,7 +842,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1919804522}
   m_Layer: 0
-  m_Name: Payload2Offset
+  m_Name: PayloadOffset
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1007,8 +1007,8 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::SP03_04_PitchYaw
   serialController: {fileID: 272482843}
-  pitchJoint: {fileID: 2081218964}
-  yawJoint: {fileID: 2032553724}
+  pitchJoint: {fileID: 2032553724}
+  yawJoint: {fileID: 2081218964}
   serialUpdatesPerSecond: 15
   pitchNeutralLocalDegrees: 0
   invertPitch: 0

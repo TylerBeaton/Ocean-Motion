@@ -1,7 +1,7 @@
 # Subprojects 03–04 — Pitch and Yaw
 
 ## Goal
-Model and control a two-servo serial kinematic chain in which the yaw servo is physically mounted on the pitch servo.
+Model and control a two-servo serial kinematic chain in which the pitch servo is physically mounted on the yaw servo.
 
 ## Pairing
 - Unity scene: `Scenes/SP03_04_PitchYaw.unity`
@@ -12,12 +12,12 @@ Model and control a two-servo serial kinematic chain in which the yaw servo is p
 
 ```text
 RigBase
-└── Servo1Joint                 Pitch, local X
+└── Servo1Joint                 Yaw, local Y
     ├── Cylinder (Display)
     └── Servo2MountOffset       (0, 0.502, 0)
-        └── Servo2Joint         Yaw, local Y
+        └── Servo2Joint         Pitch, local X
             ├── Cylinder (Display)
-            └── Payload2Offset  (-0.25, 0, 0)
+            └── PayloadOffset   (-0.25, 0, 0)
                 └── Cube (Display)
 ```
 
@@ -35,8 +35,8 @@ objectTransform =
 ```
 
 ## Coordinate conventions
-- Servo 1/pitch: `Servo1Joint.localEulerAngles.x`
-- Servo 2/yaw: `Servo2Joint.localEulerAngles.y`
+- Servo 1/yaw: `Servo1Joint.localEulerAngles.y`
+- Servo 2/pitch: `Servo2Joint.localEulerAngles.x`
 - RigBase world placement is not transmitted
 - Servo 2's local axis moves with Servo 1 through hierarchy inheritance
 
