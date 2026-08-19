@@ -48,10 +48,10 @@ public class SP03_04_PitchYaw : MonoBehaviour
                 this
             );
         }
-        else if (!yawJoint.IsChildOf(pitchJoint))
+        else if (!pitchJoint.IsChildOf(yawJoint))
         {
             Debug.LogError(
-                "YawJoint must be a descendant of PitchJoint.",
+                "PitchJoint must be a descendant of YawJoint.",
                 this
             );
         }
