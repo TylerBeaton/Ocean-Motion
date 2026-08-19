@@ -1,7 +1,7 @@
 using System.Globalization;
 using UnityEngine;
 
-public class UserPolling_ReadWrite_3D : MonoBehaviour
+public class SP02_RotationServo : MonoBehaviour
 {
     [SerializeField] private SerialController serialController;
     [SerializeField] private Transform sourceTransform;
