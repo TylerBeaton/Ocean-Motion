@@ -1,11 +1,27 @@
-using System.Globalization;
 using UnityEngine;
 
 public class SP03_04_PitchYaw : MonoBehaviour
 {
     [SerializeField] private SerialController serialController;
-    [SerializeField] private Transform sourceTransform;
+    [SerializeField] private Transform pitchJoint;
+    [SerializeField] private Transform yawJoint;
     [SerializeField] private float serialUpdatesPerSecond = 15f;
+
+    [Header("Pitch calibration (local X)")]
+    [SerializeField] private float pitchNeutralLocalDegrees;
+    [SerializeField] private bool invertPitch;
+    [SerializeField] private Vector2 pitchMechanicalLimits =
+        new Vector2(-90f, 90f);
+    [SerializeField] private Vector3 pitchServoCommands =
+        new Vector3(0f, 90f, 180f);
+
+    [Header("Yaw calibration (local Y)")]
+    [SerializeField] private float yawNeutralLocalDegrees;
+    [SerializeField] private bool invertYaw = true;
+    [SerializeField] private Vector2 yawMechanicalLimits =
+        new Vector2(-90f, 90f);
+    [SerializeField] private Vector3 yawServoCommands =
+        new Vector3(0f, 90f, 180f);
 
     private float nextSerialUpdate;
     private bool connected;
@@ -13,11 +29,6 @@ public class SP03_04_PitchYaw : MonoBehaviour
 
     private void Awake()
     {
-        if (sourceTransform == null)
-        {
-            sourceTransform = transform;
-        }
-
         if (serialController != null)
         {
             serialController.SetTearDownFunction(StopArduinoData);
@@ -25,50 +36,75 @@ public class SP03_04_PitchYaw : MonoBehaviour
         else
         {
             Debug.LogError(
-                "SerialController has not been assigned."
+                "SerialController has not been assigned.",
+                this
+            );
+        }
+
+        if (pitchJoint == null || yawJoint == null)
+        {
+            Debug.LogError(
+                "PitchJoint and YawJoint must both be assigned.",
+                this
+            );
+        }
+        else if (!yawJoint.IsChildOf(pitchJoint))
+        {
+            Debug.LogError(
+                "YawJoint must be a descendant of PitchJoint.",
+                this
             );
         }
     }
 
     private void Update()
     {
+        if (
+            !connected ||
+            pitchJoint == null ||
+            yawJoint == null
+        )
+        {
+            return;
+        }
+
         // Unscaled time keeps serial updates running even when
         // Time.timeScale is zero.
         float serialTime = Time.unscaledTime;
 
-        if (
-            connected &&
-            serialTime >= nextSerialUpdate
-        )
+        if (serialTime < nextSerialUpdate)
         {
-            SendPitchYawToArduino(sourceTransform.eulerAngles);
-
-            float safeUpdateRate =
-                Mathf.Max(1f, serialUpdatesPerSecond);
-
-            nextSerialUpdate =
-                serialTime + (1f / safeUpdateRate);
+            return;
         }
+
+        SendJointCommandsToArduino();
+
+        float safeUpdateRate =
+            Mathf.Max(1f, serialUpdatesPerSecond);
+
+        nextSerialUpdate =
+            serialTime + (1f / safeUpdateRate);
     }
 
-    private void SendPitchYawToArduino(Vector3 eulerAngles)
+    private void SendJointCommandsToArduino()
     {
-        string pitch = eulerAngles.x.ToString(
-            "F3",
-            CultureInfo.InvariantCulture
-        );
-        string yaw = eulerAngles.y.ToString(
-            "F3",
-            CultureInfo.InvariantCulture
-        );
-        string roll = eulerAngles.z.ToString(
-            "F3",
-            CultureInfo.InvariantCulture
+        int pitchCommand = GetServoCommand(
+            pitchJoint.localEulerAngles.x,
+            pitchNeutralLocalDegrees,
+            invertPitch,
+            pitchMechanicalLimits,
+            pitchServoCommands
         );
 
-        // Keep the established ROT packet for compatibility. Pitch is X,
-        // yaw is Y, and roll remains available as Z for diagnostics.
-        string message = $"ROT,{pitch},{yaw},{roll}";
+        int yawCommand = GetServoCommand(
+            yawJoint.localEulerAngles.y,
+            yawNeutralLocalDegrees,
+            invertYaw,
+            yawMechanicalLimits,
+            yawServoCommands
+        );
+
+        string message = $"SERVO,{pitchCommand},{yawCommand}";
 
         if (!loggedFirstTelemetryMessage)
         {
@@ -77,6 +113,82 @@ public class SP03_04_PitchYaw : MonoBehaviour
         }
 
         serialController.SendLatestSerialMessage(message);
+    }
+
+    private static int GetServoCommand(
+        float currentLocalDegrees,
+        float neutralLocalDegrees,
+        bool invert,
+        Vector2 mechanicalLimits,
+        Vector3 servoCommands
+    )
+    {
+        float jointAngle = Mathf.DeltaAngle(
+            neutralLocalDegrees,
+            currentLocalDegrees
+        );
+
+        if (invert)
+        {
+            jointAngle = -jointAngle;
+        }
+
+        float minimumMechanicalAngle =
+            Mathf.Min(mechanicalLimits.x, 0f);
+        float maximumMechanicalAngle =
+            Mathf.Max(mechanicalLimits.y, 0f);
+
+        jointAngle = Mathf.Clamp(
+            jointAngle,
+            minimumMechanicalAngle,
+            maximumMechanicalAngle
+        );
+
+        return ScaleJointToServoCommand(
+            jointAngle,
+            minimumMechanicalAngle,
+            maximumMechanicalAngle,
+            servoCommands
+        );
+    }
+
+    private static int ScaleJointToServoCommand(
+        float jointAngle,
+        float minimumMechanicalAngle,
+        float maximumMechanicalAngle,
+        Vector3 servoCommands
+    )
+    {
+        float command;
+
+        if (jointAngle < 0f)
+        {
+            float negativeAmount = Mathf.InverseLerp(
+                0f,
+                minimumMechanicalAngle,
+                jointAngle
+            );
+            command = Mathf.Lerp(
+                servoCommands.y,
+                servoCommands.x,
+                negativeAmount
+            );
+        }
+        else
+        {
+            float positiveAmount = Mathf.InverseLerp(
+                0f,
+                maximumMechanicalAngle,
+                jointAngle
+            );
+            command = Mathf.Lerp(
+                servoCommands.y,
+                servoCommands.z,
+                positiveAmount
+            );
+        }
+
+        return Mathf.RoundToInt(Mathf.Clamp(command, 0f, 180f));
     }
 
     private void StopArduinoData()

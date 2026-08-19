@@ -1,13 +1,13 @@
 /*
-  Unity pitch-and-yaw servo test for Arduino UNO R4 WiFi.
+  Unity calibrated pitch-and-yaw commands for Arduino UNO R4 WiFi.
 
   Expected newline-terminated commands from Unity:
-    ROT,1.250,-0.500,3.000
+    SERVO,90,90
     STOP
 
-  Mapping:
-    Unity world X pitch -90..+90 degrees -> pitch servo 0..180
-    Unity world Y yaw   -90..+90 degrees -> yaw servo 180..0
+  Unity owns joint calibration, wrapping, inversion, mechanical limits,
+  and angle-to-servo scaling. Arduino validates the final commands,
+  writes them directly, and provides the local safety timeout.
 
   Hardware:
     16x2 LCD with I2C interface at address 0x27
@@ -18,7 +18,6 @@
 */
 
 #include <LiquidCrystal_I2C.h>
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <Servo.h>
@@ -29,13 +28,14 @@ const unsigned long commandTimeoutMs = 1000;
 
 const int pitchServoPin = 10;
 const int yawServoPin = 9;
-const int servoNeutralAngle = 90;
-const int servoMinimumAngle = 0;
-const int servoMaximumAngle = 180;
-const float inputMinimumDegrees = -90.0f;
-const float inputMaximumDegrees = 90.0f;
-const bool invertPitchServo = false;
-const bool invertYawServo = true;
+
+const int pitchMinimumCommand = 0;
+const int pitchNeutralCommand = 90;
+const int pitchMaximumCommand = 180;
+
+const int yawMinimumCommand = 0;
+const int yawNeutralCommand = 90;
+const int yawMaximumCommand = 180;
 
 char inputBuffer[64];
 size_t inputLength = 0;
@@ -46,8 +46,8 @@ bool telemetryActive = false;
 
 Servo pitchServo;
 Servo yawServo;
-int currentPitchServoAngle = servoNeutralAngle;
-int currentYawServoAngle = servoNeutralAngle;
+int currentPitchCommand = pitchNeutralCommand;
+int currentYawCommand = yawNeutralCommand;
 
 void setup()
 {
@@ -104,97 +104,55 @@ void readSerialMessages()
     }
 }
 
-// Parse ROT without relying on embedded scanf float support.
-bool parseTelemetry(
+bool parseServoCommands(
     const char* message,
-    float* x,
-    float* y,
-    float* z
+    int* pitchCommand,
+    int* yawCommand
 )
 {
-    if (strncmp(message, "ROT,", 4) != 0)
+    if (strncmp(message, "SERVO,", 6) != 0)
     {
         return false;
     }
 
-    const char* cursor = message + 4;
+    const char* cursor = message + 6;
     char* end;
 
-    *x = strtof(cursor, &end);
+    long parsedPitch = strtol(cursor, &end, 10);
     if (end == cursor || *end != ',')
     {
         return false;
     }
 
     cursor = end + 1;
-    *y = strtof(cursor, &end);
-    if (end == cursor || *end != ',')
+    long parsedYaw = strtol(cursor, &end, 10);
+    if (end == cursor || *end != '\0')
     {
         return false;
     }
 
-    cursor = end + 1;
-    *z = strtof(cursor, &end);
-
-    return
-        end != cursor &&
-        *end == '\0' &&
-        isfinite(*x) &&
-        isfinite(*y) &&
-        isfinite(*z);
-}
-
-float wrapToSignedDegrees(float angle)
-{
-    float wrappedAngle = fmod(angle, 360.0f);
-
-    if (wrappedAngle >= 180.0f)
-    {
-        wrappedAngle -= 360.0f;
-    }
-    else if (wrappedAngle < -180.0f)
-    {
-        wrappedAngle += 360.0f;
-    }
-
-    return wrappedAngle;
-}
-
-int mapRotationToServo(float unityDegrees, bool invert)
-{
-    float signedAngle = wrapToSignedDegrees(unityDegrees);
-    float limitedAngle = constrain(
-        signedAngle,
-        inputMinimumDegrees,
-        inputMaximumDegrees
+    *pitchCommand = (int)constrain(
+        parsedPitch,
+        (long)pitchMinimumCommand,
+        (long)pitchMaximumCommand
+    );
+    *yawCommand = (int)constrain(
+        parsedYaw,
+        (long)yawMinimumCommand,
+        (long)yawMaximumCommand
     );
 
-    float normalizedAngle =
-        (limitedAngle - inputMinimumDegrees) /
-        (inputMaximumDegrees - inputMinimumDegrees);
-
-    if (invert)
-    {
-        normalizedAngle = 1.0f - normalizedAngle;
-    }
-
-    float servoAngle =
-        servoMinimumAngle +
-        normalizedAngle *
-        (servoMaximumAngle - servoMinimumAngle);
-
-    return round(servoAngle);
+    return true;
 }
 
 void moveServosToNeutral()
 {
-    currentPitchServoAngle = servoNeutralAngle;
-    currentYawServoAngle = servoNeutralAngle;
-    pitchServo.write(currentPitchServoAngle);
-    yawServo.write(currentYawServoAngle);
+    currentPitchCommand = pitchNeutralCommand;
+    currentYawCommand = yawNeutralCommand;
+    pitchServo.write(currentPitchCommand);
+    yawServo.write(currentYawCommand);
 }
 
-// Process ROT telemetry and STOP commands from Unity.
 void processMessage(const char* message)
 {
     if (strcmp(message, "STOP") == 0)
@@ -206,69 +164,43 @@ void processMessage(const char* message)
         return;
     }
 
-    float x;
-    float y;
-    float z;
+    int pitchCommand;
+    int yawCommand;
 
-    if (parseTelemetry(message, &x, &y, &z))
+    if (parseServoCommands(message, &pitchCommand, &yawCommand))
     {
         bool streamWasInactive = !telemetryActive;
 
         lastCommandTime = millis();
         telemetryActive = true;
 
-        int pitchServoAngle =
-            mapRotationToServo(x, invertPitchServo);
-        int yawServoAngle =
-            mapRotationToServo(y, invertYawServo);
+        currentPitchCommand = pitchCommand;
+        currentYawCommand = yawCommand;
+        pitchServo.write(pitchCommand);
+        yawServo.write(yawCommand);
 
-        currentPitchServoAngle = pitchServoAngle;
-        currentYawServoAngle = yawServoAngle;
-        pitchServo.write(pitchServoAngle);
-        yawServo.write(yawServoAngle);
-
-        displayPitchYaw(x, y);
+        displayServoCommands(pitchCommand, yawCommand);
 
         if (streamWasInactive)
         {
-            Serial.println("ROT OK");
+            Serial.println("SERVO OK");
         }
     }
 }
 
-// Display pitch/yaw input on row 1 and servo outputs on row 2.
-void displayPitchYaw(float pitch, float yaw)
+void displayServoCommands(int pitchCommand, int yawCommand)
 {
-    char pitchText[12];
-    char yawText[12];
     char line[17];
-
-    formatAngle(pitch, pitchText, sizeof(pitchText));
-    formatAngle(yaw, yawText, sizeof(yawText));
-
-    snprintf(line, sizeof(line), "P:%sY:%s", pitchText, yawText);
-    writeLcdLine(0, line);
 
     snprintf(
         line,
         sizeof(line),
-        "PS:%3d YS:%3d",
-        currentPitchServoAngle,
-        currentYawServoAngle
+        "PC:%3d YC:%3d",
+        pitchCommand,
+        yawCommand
     );
-    writeLcdLine(1, line);
-}
-
-// Format each angle into a fixed six-character LCD field.
-void formatAngle(float value, char* output, size_t outputSize)
-{
-    dtostrf(value, 6, 2, output);
-
-    if (strlen(output) > 6)
-    {
-        strncpy(output, "######", outputSize);
-        output[outputSize - 1] = '\0';
-    }
+    writeLcdLine(0, line);
+    writeLcdLine(1, "Calibrated cmd");
 }
 
 void showStatus(const char* firstLine, const char* secondLine)
