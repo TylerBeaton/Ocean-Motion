@@ -1,7 +1,7 @@
 using System.Globalization;
 using UnityEngine;
 
-public class SP03_04_PitchRoll : MonoBehaviour
+public class SP03_04_PitchYaw : MonoBehaviour
 {
     [SerializeField] private SerialController serialController;
     [SerializeField] private Transform sourceTransform;

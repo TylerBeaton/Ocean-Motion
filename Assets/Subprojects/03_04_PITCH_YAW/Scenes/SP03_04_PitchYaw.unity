@@ -603,7 +603,7 @@ GameObject:
   - component: {fileID: 2131017465}
   - component: {fileID: 2131017466}
   m_Layer: 0
-  m_Name: SP03_04_PitchRoll
+  m_Name: SP03_04_PitchYaw
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -635,7 +635,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e27ac9a6eb2f45a18c2f78850b33f9d2, type: 3}
   m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::SP03_04_PitchRoll
+  m_EditorClassIdentifier: Assembly-CSharp::SP03_04_PitchYaw
   serialController: {fileID: 272482843}
   sourceTransform: {fileID: 2081218964}
   serialUpdatesPerSecond: 15
