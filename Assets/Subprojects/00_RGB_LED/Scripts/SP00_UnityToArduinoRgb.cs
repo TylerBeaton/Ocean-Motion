@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class UserPolling_ReadWrite_RGB : MonoBehaviour
+public class SP00_UnityToArduinoRgb : MonoBehaviour
 {
     [SerializeField] private SerialController serialController;
     [SerializeField] private Material material;
