@@ -41,7 +41,7 @@ public class SP03_04_PitchYaw : MonoBehaviour
             serialTime >= nextSerialUpdate
         )
         {
-            SendRotationToArduino(sourceTransform.eulerAngles);
+            SendPitchYawToArduino(sourceTransform.eulerAngles);
 
             float safeUpdateRate =
                 Mathf.Max(1f, serialUpdatesPerSecond);
@@ -51,22 +51,24 @@ public class SP03_04_PitchYaw : MonoBehaviour
         }
     }
 
-    private void SendRotationToArduino(Vector3 eulerAngles)
+    private void SendPitchYawToArduino(Vector3 eulerAngles)
     {
-        string x = eulerAngles.x.ToString(
+        string pitch = eulerAngles.x.ToString(
             "F3",
             CultureInfo.InvariantCulture
         );
-        string y = eulerAngles.y.ToString(
+        string yaw = eulerAngles.y.ToString(
             "F3",
             CultureInfo.InvariantCulture
         );
-        string z = eulerAngles.z.ToString(
+        string roll = eulerAngles.z.ToString(
             "F3",
             CultureInfo.InvariantCulture
         );
 
-        string message = $"ROT,{x},{y},{z}";
+        // Keep the established ROT packet for compatibility. Pitch is X,
+        // yaw is Y, and roll remains available as Z for diagnostics.
+        string message = $"ROT,{pitch},{yaw},{roll}";
 
         if (!loggedFirstTelemetryMessage)
         {

@@ -1,16 +1,20 @@
 /*
-  Unity rotation-to-servo test for Arduino UNO R4 WiFi.
+  Unity pitch-and-yaw servo test for Arduino UNO R4 WiFi.
 
   Expected newline-terminated commands from Unity:
     ROT,1.250,-0.500,3.000
     STOP
 
   Mapping:
-    Unity world Y rotation -90..+90 degrees -> servo 0..180 degrees
+    Unity world X pitch -90..+90 degrees -> pitch servo 0..180
+    Unity world Y yaw   -90..+90 degrees -> yaw servo 180..0
 
   Hardware:
     16x2 LCD with I2C interface at address 0x27
-    Hobby servo signal connected to pin 9
+    Yaw servo signal connected to pin 9
+    Pitch servo signal connected to pin 10
+    Servos powered from an appropriate external 5 V supply
+    External supply ground connected to Arduino ground
 */
 
 #include <LiquidCrystal_I2C.h>
@@ -23,13 +27,15 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 const unsigned long commandTimeoutMs = 1000;
 
-const int servoPin = 9;
+const int pitchServoPin = 10;
+const int yawServoPin = 9;
 const int servoNeutralAngle = 90;
 const int servoMinimumAngle = 0;
 const int servoMaximumAngle = 180;
 const float inputMinimumDegrees = -90.0f;
 const float inputMaximumDegrees = 90.0f;
-const bool invertServo = true;
+const bool invertPitchServo = false;
+const bool invertYawServo = true;
 
 char inputBuffer[64];
 size_t inputLength = 0;
@@ -38,8 +44,10 @@ bool inputOverflow = false;
 unsigned long lastCommandTime = 0;
 bool telemetryActive = false;
 
-Servo rotationServo;
-int currentServoAngle = servoNeutralAngle;
+Servo pitchServo;
+Servo yawServo;
+int currentPitchServoAngle = servoNeutralAngle;
+int currentYawServoAngle = servoNeutralAngle;
 
 void setup()
 {
@@ -52,8 +60,9 @@ void setup()
     showStatus("Waiting for", "Unity data...");
     Serial.println("READY");
 
-    rotationServo.attach(servoPin);
-    moveServoToNeutral();
+    pitchServo.attach(pitchServoPin);
+    yawServo.attach(yawServoPin);
+    moveServosToNeutral();
 }
 
 void loop()
@@ -151,9 +160,9 @@ float wrapToSignedDegrees(float angle)
     return wrappedAngle;
 }
 
-int mapYRotationToServo(float unityYDegrees)
+int mapRotationToServo(float unityDegrees, bool invert)
 {
-    float signedAngle = wrapToSignedDegrees(unityYDegrees);
+    float signedAngle = wrapToSignedDegrees(unityDegrees);
     float limitedAngle = constrain(
         signedAngle,
         inputMinimumDegrees,
@@ -164,7 +173,7 @@ int mapYRotationToServo(float unityYDegrees)
         (limitedAngle - inputMinimumDegrees) /
         (inputMaximumDegrees - inputMinimumDegrees);
 
-    if (invertServo)
+    if (invert)
     {
         normalizedAngle = 1.0f - normalizedAngle;
     }
@@ -177,10 +186,12 @@ int mapYRotationToServo(float unityYDegrees)
     return round(servoAngle);
 }
 
-void moveServoToNeutral()
+void moveServosToNeutral()
 {
-    currentServoAngle = servoNeutralAngle;
-    rotationServo.write(currentServoAngle);
+    currentPitchServoAngle = servoNeutralAngle;
+    currentYawServoAngle = servoNeutralAngle;
+    pitchServo.write(currentPitchServoAngle);
+    yawServo.write(currentYawServoAngle);
 }
 
 // Process ROT telemetry and STOP commands from Unity.
@@ -189,8 +200,8 @@ void processMessage(const char* message)
     if (strcmp(message, "STOP") == 0)
     {
         telemetryActive = false;
-        moveServoToNeutral();
-        showStatus("Unity stopped", "Servo neutral");
+        moveServosToNeutral();
+        showStatus("Unity stopped", "Servos neutral");
         Serial.println("STOPPED");
         return;
     }
@@ -206,11 +217,17 @@ void processMessage(const char* message)
         lastCommandTime = millis();
         telemetryActive = true;
 
-        int servoAngle = mapYRotationToServo(y);
-        currentServoAngle = servoAngle;
-        rotationServo.write(servoAngle);
+        int pitchServoAngle =
+            mapRotationToServo(x, invertPitchServo);
+        int yawServoAngle =
+            mapRotationToServo(y, invertYawServo);
 
-        displayRotation(x, y, z);
+        currentPitchServoAngle = pitchServoAngle;
+        currentYawServoAngle = yawServoAngle;
+        pitchServo.write(pitchServoAngle);
+        yawServo.write(yawServoAngle);
+
+        displayPitchYaw(x, y);
 
         if (streamWasInactive)
         {
@@ -219,27 +236,25 @@ void processMessage(const char* message)
     }
 }
 
-// Display Euler X and Y on the first row and Euler Z on the second row.
-void displayRotation(float x, float y, float z)
+// Display pitch/yaw input on row 1 and servo outputs on row 2.
+void displayPitchYaw(float pitch, float yaw)
 {
-    char xText[12];
-    char yText[12];
-    char zText[12];
+    char pitchText[12];
+    char yawText[12];
     char line[17];
 
-    formatAngle(x, xText, sizeof(xText));
-    formatAngle(y, yText, sizeof(yText));
-    formatAngle(z, zText, sizeof(zText));
+    formatAngle(pitch, pitchText, sizeof(pitchText));
+    formatAngle(yaw, yawText, sizeof(yawText));
 
-    snprintf(line, sizeof(line), "X:%sY:%s", xText, yText);
+    snprintf(line, sizeof(line), "P:%sY:%s", pitchText, yawText);
     writeLcdLine(0, line);
 
     snprintf(
         line,
         sizeof(line),
-        "Z:%s S:%3d",
-        zText,
-        currentServoAngle
+        "PS:%3d YS:%3d",
+        currentPitchServoAngle,
+        currentYawServoAngle
     );
     writeLcdLine(1, line);
 }
@@ -291,7 +306,7 @@ void checkConnectionTimeout()
     )
     {
         telemetryActive = false;
-        moveServoToNeutral();
-        showStatus("Unity timeout", "Servo neutral");
+        moveServosToNeutral();
+        showStatus("Unity timeout", "Servos neutral");
     }
 }

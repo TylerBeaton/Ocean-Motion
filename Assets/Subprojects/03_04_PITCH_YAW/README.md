@@ -13,12 +13,21 @@ Archive the combined pitch-and-yaw milestone as one paired Unity and Arduino sub
 - Telemetry: `ROT,<x>,<y>,<z>`
 - Ordered command: `STOP`
 - Unity sends world-space Euler rotation using latest-state delivery
+- Unity X/pitch drives the pitch servo on pin 10
+- Unity Y/yaw drives the yaw servo on pin 9
+
+## Mapping
+- Pitch: -90 to +90 degrees maps to servo 0 to 180 degrees
+- Yaw: -90 to +90 degrees maps to servo 180 to 0 degrees
+- Input outside either range is clamped
+- `STOP` or a one-second timeout returns both servos to 90 degrees
+- LCD row 1 shows pitch/yaw input; row 2 shows both servo commands
 
 ## Dependency and reuse
 Directly builds on Subproject 02's rotation-to-servo path. Subprojects 03 and 04 are grouped because pitch and yaw were developed as one combined milestone.
 
-## Current archived baseline
-The Unity scene and sender are separated from Subproject 02 and ready for the combined milestone. The Arduino sketch is copied from the last verified single-servo baseline; it currently maps Unity Y rotation to one servo on pin 9. Add the verified second-axis pin, mapping, inversion, and neutral behavior here before treating this archive as the final two-axis firmware snapshot.
+## Current implementation
+The Unity sender keeps the compatible `ROT,x,y,z` packet. Arduino maps X to the pitch servo and Y to the yaw servo through separate pin and inversion constants, while preserving latest-state telemetry and ordered `STOP` behavior.
 
 ## Hardware notes
-Use an appropriate external 5 V supply for multiple servos and connect its ground to Arduino ground. Do not infer that a setup safe for one unloaded servo is adequate for two loaded servos.
+Use an appropriate external 5 V supply for both servos and connect its ground to Arduino ground. The pin assignments compile but must still be checked against the physical wiring. If either axis moves backward, change only its `invertPitchServo` or `invertYawServo` constant.
