@@ -20,7 +20,8 @@ The final actuator architecture remains intentionally undecided until the Update
 - Preserve completed milestone archives. Create new work in its numbered subproject directory rather than overwriting an earlier scene or archive.
 - Before adding a new simulation or hardware integration, confirm that the last known-good archived scene still compiles.
 - Keep scenes, scripts, prefabs, materials, diagnostics, and milestone notes organized within the numbered subproject where practical.
-- Prefer small, inspectable stages over generating an entire system before testing its foundations.
+- Develop each numbered subproject step by step when using agentic coding. Do not skip prerequisite discovery, baseline checks, intermediate implementation stages, hands-on validation, or final verification, even when later stages appear straightforward.
+- Prefer small, inspectable stages over generating an entire system before testing its foundations. Complete and verify each stage before advancing to the next.
 
 ## Motion-axis convention
 
