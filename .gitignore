@@ -52,6 +52,16 @@
 # Duplicate settings files created locally; canonical files are tracked.
 /ProjectSettings/ProjectAuditorSettings 2.asset
 /ProjectSettings/ShaderGraphSettings 2.asset
+/ProjectSettings/URPProjectSettings 2.asset
+
+# Locally installed Asset Store plugins. Reinstall them through Unity when needed;
+# do not commit their large vendor/demo payloads to the project archive.
+/[Aa]ssets/AmplifyShaderEditor/
+/[Aa]ssets/AmplifyShaderEditor.meta
+/[Aa]ssets/Plugins/RootMotion/
+/[Aa]ssets/Plugins/RootMotion.meta
+/[Aa]ssets/Plugins.meta
+/ProjectSettings/AmplifyShaderEditor.asset
 
 # Gradle cache directory
 .gradle/
