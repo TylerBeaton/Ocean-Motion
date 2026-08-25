@@ -11,6 +11,8 @@ public class BoatBuoyancy : MonoBehaviour
     public float springStrength = 0.1f;  // tune per stage below
     public float damping = 0.1f;
 
+    [SerializeField] private WaveField waveField;
+
     private Rigidbody rb;
 
     void Start()
@@ -22,7 +24,11 @@ public class BoatBuoyancy : MonoBehaviour
     {
         foreach (var p in points)
         {
-            float depth = waterLevel - p.position.y;
+
+        float surfaceY = waveField != null
+        ? waveField.SampleHeight(p.position, Time.time)
+        : waterLevel;
+            float depth = surfaceY - p.position.y - floatHeight;
             if (depth <= 0) continue; // not submerged
 
             Vector3 pointVel = rb.GetPointVelocity(p.position);
