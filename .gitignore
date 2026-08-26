@@ -20,9 +20,11 @@
 /[Uu]ser[Ss]ettings/
 *.log
 
-# By default unity supports Blender asset imports, *.blend1 blender files do not need to be committed to version control.
+# Imported DCC source files kept local; Unity-generated metadata must stay local too.
 *.blend1
 *.blend1.meta
+*.c4d
+*.c4d.meta
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
