@@ -11,6 +11,10 @@ public class BoatBuoyancy : MonoBehaviour
     public float springStrength = 0.1f;  // tune per stage below
     public float damping = 0.1f;
 
+    [Header("Simple water resistance")]
+[SerializeField] private float forwardWaterDrag = 100f;
+[SerializeField] private float lateralWaterDrag = 300f;
+
     [SerializeField] private WaveField waveField;
 
     private Rigidbody rb;
@@ -34,6 +38,19 @@ public class BoatBuoyancy : MonoBehaviour
             Vector3 pointVel = rb.GetPointVelocity(p.position);
             float force = depth * springStrength - pointVel.y * damping;
             rb.AddForceAtPosition(Vector3.up * force, p.position);
+
+            // Added as a test for water drag
+            Vector3 forward = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+            Vector3 right = Vector3.ProjectOnPlane(transform.right, Vector3.up).normalized;
+
+            float forwardSpeed = Vector3.Dot(pointVel, forward);
+            float lateralSpeed = Vector3.Dot(pointVel, right);
+
+            Vector3 waterDragForce =
+                -forward * forwardSpeed * forwardWaterDrag
+                -right * lateralSpeed * lateralWaterDrag;
+
+            rb.AddForceAtPosition(waterDragForce, p.position);
         }
     }
 }
