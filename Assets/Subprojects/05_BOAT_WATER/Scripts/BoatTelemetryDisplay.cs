@@ -7,6 +7,7 @@ namespace OceanMotion.Subproject05
     {
         [Header("References")]
         [SerializeField] private BoatMotionTelemetry telemetry;
+        [SerializeField] private WaveField waveField;
         [SerializeField] private TMP_Text telemetryText;
 
         [Header("Display")]
@@ -17,6 +18,7 @@ namespace OceanMotion.Subproject05
         private void Reset()
         {
             telemetryText = GetComponentInChildren<TMP_Text>();
+            waveField = FindFirstObjectByType<WaveField>();
         }
 
         private void Update()
@@ -33,22 +35,30 @@ namespace OceanMotion.Subproject05
 
             nextRefreshTime = Time.unscaledTime + refreshInterval;
 
+            string presetName =
+                waveField != null ? waveField.ActivePresetName : "Unassigned";
+
             if (telemetry == null)
             {
                 telemetryText.text =
-                    "BOAT MOTION\n\nTelemetry reference missing";
+                    "BOAT MOTION\n\n" +
+                    $"Preset: {presetName}\n\n" +
+                    "Telemetry reference missing";
                 return;
             }
 
             if (!telemetry.IsCalibrated)
             {
                 telemetryText.text =
-                    "BOAT MOTION\n\nWaiting for neutral calibration";
+                    "BOAT MOTION\n\n" +
+                    $"Preset: {presetName}\n\n" +
+                    "Waiting for neutral calibration";
                 return;
             }
 
             telemetryText.text =
                 "BOAT MOTION\n\n" +
+                $"Preset: {presetName}\n" +
                 $"Pitch: {telemetry.Pitch:+0.00;-0.00;0.00}°\n" +
                 $"Roll:  {telemetry.Roll:+0.00;-0.00;0.00}°\n" +
                 $"Heave: {telemetry.Heave:+0.00;-0.00;0.00}\n" +

@@ -249,7 +249,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 24, y: -24}
-  m_SizeDelta: {x: 360, y: 240}
+  m_SizeDelta: {x: 360, y: 270}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &700248709
 MonoBehaviour:
@@ -264,6 +264,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: OceanMotion.Subproject05::OceanMotion.Subproject05.BoatTelemetryDisplay
   telemetry: {fileID: 1959859022}
+  waveField: {fileID: 1280652497}
   telemetryText: {fileID: 801145981}
   refreshInterval: 0.1
 --- !u!114 &700248710
@@ -361,7 +362,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "BOAT MOTION\n\nPitch:  0.00\xB0\nRoll:   0.00\xB0\nHeave:  0.00\nYaw:   
+  m_text: "BOAT MOTION\n\nPreset: \nPitch:  0.00\xB0\nRoll:   0.00\xB0\nHeave:  0.00\nYaw:   
     0.00\xB0\nTime:   0.00 s"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -730,18 +731,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: OceanMotion.Subproject05::OceanMotion.Subproject05.WaveField
   baseHeightOffset: 0
+  activePreset: 0
+  lastAppliedPreset: 0
   primaryWave:
     amplitude: 0
     wavelength: 30
-    direction: {x: 1, y: 0}
-    speed: 3
+    direction: {x: 0, y: 1}
+    speed: 0.8
     phaseOffsetRadians: 0
   secondaryWave:
     amplitude: 0
     wavelength: 30
-    direction: {x: 0, y: 1}
-    speed: 3
-    phaseOffsetRadians: 0.5
+    direction: {x: 1, y: 0}
+    speed: 0.65
+    phaseOffsetRadians: 0.7
 --- !u!4 &1280652498
 Transform:
   m_ObjectHideFlags: 0
