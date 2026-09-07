@@ -50,19 +50,18 @@ namespace OceanMotion.Subproject05
             if (!telemetry.IsCalibrated)
             {
                 telemetryText.text =
-                    "BOAT MOTION\n\n" +
                     $"Preset: {presetName}\n\n" +
-                    "Waiting for neutral calibration";
+                    "Waiting for neutral\ncalibration";
                 return;
             }
 
             telemetryText.text =
-                "BOAT MOTION\n\n" +
                 $"Preset: {presetName}\n" +
                 $"Pitch: {telemetry.Pitch:+0.00;-0.00;0.00}°\n" +
                 $"Roll:  {telemetry.Roll:+0.00;-0.00;0.00}°\n" +
                 $"Heave: {telemetry.Heave:+0.00;-0.00;0.00}\n" +
                 $"Yaw:   {telemetry.Yaw:+0.00;-0.00;0.00}°\n" +
+                $"Speed: {telemetry.Speed * 1.94384f:0.00} knots\n" +
                 $"Time:  {telemetry.SimulationTime:0.0} s\n" +
                 $"Frame: {telemetry.Sequence}";
         }

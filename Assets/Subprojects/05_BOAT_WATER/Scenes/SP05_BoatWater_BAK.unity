@@ -638,7 +638,7 @@ Transform:
   m_GameObject: {fileID: 355454312}
   serializedVersion: 2
   m_LocalRotation: {x: 0.05758732, y: -0.8841771, z: 0.11326573, w: 0.44953924}
-  m_LocalPosition: {x: 0, y: 1.77, z: -0.19}
+  m_LocalPosition: {x: 0, y: 1.5, z: -0.19}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2023,8 +2023,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2200,7 +2200,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: OceanMotion.Subproject05::OceanMotion.Subproject05.WaveSurface
   field: {fileID: 1280652497}
   size: {x: 512, y: 512}
-  resolution: {x: 128, y: 128}
+  resolution: {x: 256, y: 256}
   recalculateNormalsEveryFrame: 1
 --- !u!23 &1280652495
 MeshRenderer:

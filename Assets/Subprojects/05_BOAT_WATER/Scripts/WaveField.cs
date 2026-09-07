@@ -97,23 +97,23 @@ namespace OceanMotion.Subproject05
 
                 case WavePreset.Bow:
                     primaryWave = CreateWave(
-                        0.15f, 30f, new Vector2(0f, 1f), 0.8f, 0f);
+                        0.5f, 20, new Vector2(0f, 1f), 2f, 0f);
                     secondaryWave = CreateWave(
-                        0f, 30f, new Vector2(1f, 0f), 0.65f, 0.7f);
+                        0f, 20f, new Vector2(1f, 0f), 0.65f, 0.7f);
                     break;
 
                 case WavePreset.Side:
                     primaryWave = CreateWave(
-                        0.15f, 30f, new Vector2(1f, 0f), 0.8f, 0f);
+                        0.5f, 20f, new Vector2(1f, 0f), 2f, 0f);
                     secondaryWave = CreateWave(
-                        0f, 30f, new Vector2(0f, 1f), 0.65f, 0.7f);
+                        0f, 20f, new Vector2(0f, 1f), 0.65f, 0.7f);
                     break;
 
                 case WavePreset.Crossed:
                     primaryWave = CreateWave(
-                        0.10f, 30f, new Vector2(0f, 1f), 0.8f, 0f);
+                        0.5f, 20f, new Vector2(0f, 1f), 2f, 0f);
                     secondaryWave = CreateWave(
-                        0.10f, 30f, new Vector2(1f, 0f), 0.65f, 0.7f);
+                        0.5f, 20f, new Vector2(1f, 0f), 1.5f, 0.7f);
                     break;
             }
 

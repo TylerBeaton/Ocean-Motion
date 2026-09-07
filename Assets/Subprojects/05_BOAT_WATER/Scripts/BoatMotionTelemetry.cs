@@ -21,6 +21,7 @@ namespace OceanMotion.Subproject05
         [SerializeField] private float simulationTime;
         [SerializeField] private Vector3 rawWorldPosition;
         [SerializeField] private Vector3 rawWorldEulerAngles;
+        [SerializeField] private float speed;
 
         private Rigidbody boatRigidbody;
 
@@ -29,6 +30,7 @@ namespace OceanMotion.Subproject05
         public float Roll => roll;
         public float Heave => heave;
         public float Yaw => yaw;
+        public float Speed => speed;
         public int Sequence => sequence;
         public float SimulationTime => simulationTime;
 
@@ -41,6 +43,7 @@ namespace OceanMotion.Subproject05
         {
             rawWorldPosition = boatRigidbody.position;
             rawWorldEulerAngles = boatRigidbody.rotation.eulerAngles;
+            speed = boatRigidbody.linearVelocity.magnitude;
 
             if (!isCalibrated)
             {
