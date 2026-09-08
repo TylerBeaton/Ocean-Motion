@@ -12,13 +12,15 @@ The first integrated platform may focus on **pitch, roll, and heave** before exp
 
 Not every milestone must become part of the final machine. Some are independent experiments, while others produce reusable software, measurements, or design knowledge. The final actuator architecture—rotary servos or feedback linear actuators—will be selected during Milestone 08 rather than assumed in advance.
 
-## Use of AI
+## AI-Assisted Development (Updated)
 
-AI tools are used throughout Ocean Motion primarily as **technical auditors**.
+I use AI-assisted tools throughout Ocean Motion to help plan and coordinate milestones, research technical questions, compare possible approaches, develop and review code, and maintain project documentation.
 
-They help inspect code, review milestone plans, question assumptions, identify missing tests, check documentation against the implementation, and highlight risks involving physics, control systems, hardware, and safety. AI is also used to compare possible approaches and preserve useful context as the project develops.
+AI is particularly useful as a technical collaborator and auditor. It helps me challenge assumptions, inspect code, identify missing tests, compare documentation with the implementation, and highlight potential risks involving physics, control systems, hardware, power, and safety.
 
-AI output is treated as a recommendation rather than proof that something works. Final design decisions remain human decisions, and hands-on testing in Unity or on the physical hardware is required before a milestone is considered complete. AI-generated conclusions do not replace measurements, physical validation, or safe operating limits.
+Whether code is written directly by me or developed with AI assistance, I am responsible for every change I accept into this project. I review AI-assisted code, ensure that I understand it, and evaluate it against the same standards of correctness, quality, safety, and maintainability as any other contribution.
+
+AI output is treated as a recommendation or hypothesis—not as proof that something works. Final design decisions remain human decisions, and hands-on testing in Unity or on physical hardware is required before a milestone is considered complete. AI-generated conclusions do not replace testing, measurements, engineering judgment, physical validation, or safe operating limits.
 
 ## Milestone roadmap
 
