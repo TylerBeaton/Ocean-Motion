@@ -53,7 +53,7 @@
 *.slnx
 
 # Duplicate settings files created locally; canonical files are tracked.
-/ProjectSettings/ProjectAuditorSettings 2.asset
+/ProjectSettings/ProjectAuditorSettings *.asset
 /ProjectSettings/ShaderGraphSettings 2.asset
 /ProjectSettings/URPProjectSettings 2.asset
 
