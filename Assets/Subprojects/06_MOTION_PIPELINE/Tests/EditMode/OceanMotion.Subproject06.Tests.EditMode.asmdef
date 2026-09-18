@@ -1,0 +1,13 @@
+{
+  "name": "OceanMotion.Subproject06.Tests.EditMode",
+  "rootNamespace": "OceanMotion.Subproject06.Tests",
+  "references": [
+    "OceanMotion.Subproject06.Core"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

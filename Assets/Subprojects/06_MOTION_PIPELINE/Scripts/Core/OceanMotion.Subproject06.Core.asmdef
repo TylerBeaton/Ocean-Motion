@@ -1,0 +1,7 @@
+{
+  "name": "OceanMotion.Subproject06.Core",
+  "rootNamespace": "OceanMotion.Subproject06",
+  "references": [],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}
