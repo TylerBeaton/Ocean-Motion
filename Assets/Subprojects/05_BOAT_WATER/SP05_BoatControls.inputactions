@@ -20,17 +20,6 @@
             "bindings": [
                 {
                     "name": "",
-                    "id": "00b0a506-7d35-4b75-ada6-a78770d43eb4",
-                    "path": "<Keyboard>/a",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Drive",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "9d4ccab6-8d32-411c-803b-0d17fdd6a3de",
                     "path": "",
                     "interactions": "",
