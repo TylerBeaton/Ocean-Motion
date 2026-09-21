@@ -21,14 +21,22 @@ namespace OceanMotion.Subproject06.Editor
                 UnityEngine.Object.FindFirstObjectByType<MotionPipelineController>();
             MotionPipelinePoseDisplay display =
                 UnityEngine.Object.FindFirstObjectByType<MotionPipelinePoseDisplay>();
+            MotionSerialTransport transport =
+                UnityEngine.Object.FindFirstObjectByType<MotionSerialTransport>();
+            SerialController serialController =
+                UnityEngine.Object.FindFirstObjectByType<SerialController>();
 
             Require(source != null, "Saved scene is missing BoatTelemetryPoseSource.");
             Require(controller != null, "Saved scene is missing MotionPipelineController.");
             Require(display != null, "Saved scene is missing MotionPipelinePoseDisplay.");
+            Require(
+                transport != null && serialController != null,
+                "Saved scene is missing the disabled serial transport components.");
 
             var sourceObject = new SerializedObject(source);
             var controllerObject = new SerializedObject(controller);
             var displayObject = new SerializedObject(display);
+            var transportObject = new SerializedObject(transport);
 
             Require(
                 sourceObject.FindProperty("telemetry").objectReferenceValue != null,
@@ -40,6 +48,23 @@ namespace OceanMotion.Subproject06.Editor
                 displayObject.FindProperty("source").objectReferenceValue == source &&
                 displayObject.FindProperty("controller").objectReferenceValue == controller,
                 "Pose display pipeline references are incorrect.");
+            Require(
+                transportObject.FindProperty("controller").objectReferenceValue == controller,
+                "Serial transport controller reference is incorrect.");
+            Require(
+                transportObject.FindProperty("serialController").objectReferenceValue ==
+                    serialController,
+                "Serial transport SerialController reference is incorrect.");
+            Require(serialController.baudRate == MotionSerialTransport.BaudRate,
+                "Serial transport baud rate is incorrect.");
+            Require(serialController.messageListener == transport.gameObject,
+                "Serial callbacks are not routed to MotionSerialTransport.");
+            Require(!serialController.enabled,
+                "SerialController must remain disabled until a hardware port is selected.");
+            Require(serialController.portName == "/dev/cu.usbmodem-SET-ME",
+                "Saved serial port must remain an explicit hardware placeholder.");
+            Require(serialController.maxUnreadMessages == 64,
+                "Serial receive queue must hold the 20 Hz acknowledgement stream.");
 
             Transform rawPose = (Transform)displayObject
                 .FindProperty("rawPose").objectReferenceValue;
@@ -86,7 +111,7 @@ namespace OceanMotion.Subproject06.Editor
                 0.1f,
                 "Rotation smoothing time is incorrect.");
 
-            Debug.Log("SP06_SAVED_SCENE_CHECKS: passed=17 failed=0");
+            Debug.Log("SP06_SAVED_SCENE_CHECKS: passed=25 failed=0");
         }
 
         private static bool AreHierarchyRelated(Transform first, Transform second)

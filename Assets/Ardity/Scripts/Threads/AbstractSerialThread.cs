@@ -14,6 +14,7 @@ using System.IO.Ports;
 using System.Collections;
 using System.Threading;
 
+
 /**
  * This class contains methods that must be run from inside a thread and others
  * that must be invoked from Unity. Both types of methods are clearly marked in
@@ -41,17 +42,19 @@ public abstract class AbstractSerialThread
     // Amount of milliseconds alloted to a single write. An exception is thrown
     // when such operations take more than this time to complete.
     private const int writeTimeout = 100;
+    private const int maxOutcomeMessages = 1024;
 
     // Internal synchronized queues used to send and receive messages from the
     // serial device. They serve as the point of communication between the
     // Unity thread and the SerialComm thread.
-    private Queue inputQueue, outputQueue;
+    private Queue inputQueue, outputQueue, sentQueue;
 
     // Indicates when this thread should stop executing. When SerialController
     // invokes 'RequestStop()' this variable is set.
     private bool stopRequested = false;
 
     private bool enqueueStatusMessages = false;
+    private bool outputEnabledForConnection = false;
 
 
     /**************************************************************************
@@ -76,6 +79,8 @@ public abstract class AbstractSerialThread
 
         inputQueue = Queue.Synchronized(new Queue());
         outputQueue = Queue.Synchronized(new Queue());
+        sentQueue = Queue.Synchronized(new Queue());
+
     }
 
     // ------------------------------------------------------------------------
@@ -103,6 +108,15 @@ public abstract class AbstractSerialThread
         return inputQueue.Dequeue();
     }
 
+    public object ReadSentMessage()
+    {
+        if (sentQueue.Count == 0)
+            return null;
+
+        return sentQueue.Dequeue();
+    }
+
+
     // ------------------------------------------------------------------------
     // Schedules a message to be sent. It writes the message to the
     // output queue, later the method 'RunOnce' reads this queue and sends
@@ -121,6 +135,16 @@ public abstract class AbstractSerialThread
         {
             outputQueue.Clear();
             outputQueue.Enqueue(message);
+        }
+    }
+
+    // Output stays closed after a port opens until Unity handles the matching
+    // connection event. No queued state can cross a reconnect handshake.
+    public void EnableOutputForCurrentConnection()
+    {
+        lock (this)
+        {
+            outputEnabledForConnection = true;
         }
     }
 
@@ -158,6 +182,15 @@ public abstract class AbstractSerialThread
                     // reading/writing to the device. Log the detailed message
                     // to the console and notify the listener.
                     Debug.LogWarning("Exception: " + ioe.Message + " StackTrace: " + ioe.StackTrace);
+                    lock (inputQueue.SyncRoot)
+                    {
+                        inputQueue.Clear();
+                    }
+                    DropPendingOutput();
+                    lock (this)
+                    {
+                        outputEnabledForConnection = false;
+                    }
                     if (enqueueStatusMessages)
                         inputQueue.Enqueue(SerialController.SERIAL_DEVICE_DISCONNECTED);
 
@@ -178,7 +211,7 @@ public abstract class AbstractSerialThread
             // from the output queue to reach the other endpoint.
             while (outputQueue.Count != 0)
             {
-                SendToWire(outputQueue.Dequeue(), serialPort);
+                SendToWireTracked(outputQueue.Dequeue(), serialPort);
             }
 
             // Attempt to do a final cleanup. This method doesn't fail even if
@@ -196,6 +229,13 @@ public abstract class AbstractSerialThread
     // ------------------------------------------------------------------------
     private void AttemptConnection()
     {
+        ResetReceiveBuffer();
+        DropPendingOutput();
+        lock (this)
+        {
+            outputEnabledForConnection = false;
+        }
+
         serialPort = new SerialPort(portName, baudRate);
         serialPort.ReadTimeout = readTimeout;
         serialPort.WriteTimeout = writeTimeout;
@@ -206,6 +246,9 @@ public abstract class AbstractSerialThread
         if (enqueueStatusMessages)
             inputQueue.Enqueue(SerialController.SERIAL_DEVICE_CONNECTED);
     }
+
+    // Runs on the serial worker before opening each new connection.
+    protected virtual void ResetReceiveBuffer() { }
 
     // ------------------------------------------------------------------------
     // Release any resource used, and don't fail in the attempt.
@@ -238,6 +281,39 @@ public abstract class AbstractSerialThread
         }
     }
 
+    private bool IsOutputEnabledForConnection()
+    {
+        lock (this)
+        {
+            // Binary/custom-delimiter clients do not receive connection events.
+            return !enqueueStatusMessages || outputEnabledForConnection;
+        }
+    }
+
+    private void DropPendingOutput()
+    {
+        lock (outputQueue.SyncRoot)
+        {
+            outputQueue.Clear();
+        }
+    }
+
+    private static void EnqueueBoundedOutcome(Queue queue, object outcome)
+    {
+        lock (queue.SyncRoot)
+        {
+            while (queue.Count >= maxOutcomeMessages)
+                queue.Dequeue();
+            queue.Enqueue(outcome);
+        }
+    }
+
+    private void SendToWireTracked(object message, SerialPort port)
+    {
+        SendToWire(message, port);
+        EnqueueBoundedOutcome(sentQueue, message);
+    }
+
     // ------------------------------------------------------------------------
     // A single iteration of the semi-infinite loop. Attempt to read/write to
     // the serial device. If there are more lines in the queue than we may have
@@ -247,24 +323,22 @@ public abstract class AbstractSerialThread
     // ------------------------------------------------------------------------
     private void RunOnce()
     {
+        // Dequeue atomically because the Unity thread may replace pending
+        // state messages at the same time.
+        object outputMessage = null;
+        lock (outputQueue.SyncRoot)
+        {
+            if (IsOutputEnabledForConnection() && outputQueue.Count != 0)
+            {
+                outputMessage = outputQueue.Dequeue();
+            }
+        }
+
+        if (outputMessage != null)
+            SendToWireTracked(outputMessage, serialPort);
+
         try
         {
-            // Dequeue atomically because the Unity thread may replace pending
-            // state messages at the same time.
-            object outputMessage = null;
-            lock (outputQueue.SyncRoot)
-            {
-                if (outputQueue.Count != 0)
-                {
-                    outputMessage = outputQueue.Dequeue();
-                }
-            }
-
-            if (outputMessage != null)
-            {
-                SendToWire(outputMessage, serialPort);
-            }
-
             // Read a message.
             // If a line was read, and we have not filled our queue, enqueue
             // this line so it eventually reaches the Message Listener.
