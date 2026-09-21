@@ -54,6 +54,7 @@ public class SerialController : MonoBehaviour
     // Internal reference to the Thread and the object that runs in it.
     protected Thread thread;
     protected SerialThreadLines serialThread;
+    private bool pollingConnectionObserved;
 
 
     // ------------------------------------------------------------------------
@@ -63,6 +64,7 @@ public class SerialController : MonoBehaviour
     // ------------------------------------------------------------------------
     void OnEnable()
     {
+        pollingConnectionObserved = false;
         serialThread = new SerialThreadLines(portName, 
                                              baudRate, 
                                              reconnectionDelay,
@@ -85,11 +87,9 @@ public class SerialController : MonoBehaviour
         // The serialThread reference should never be null at this point,
         // unless an Exception happened in the OnEnable(), in which case I've
         // no idea what face Unity will make.
-        if (serialThread != null)
-        {
-            serialThread.RequestStop();
-            serialThread = null;
-        }
+        SerialThreadLines stoppingThread = serialThread;
+        if (stoppingThread != null)
+            stoppingThread.RequestStop();
 
         // This reference shouldn't be null at this point anyway.
         if (thread != null)
@@ -97,6 +97,16 @@ public class SerialController : MonoBehaviour
             thread.Join();
             thread = null;
         }
+
+        // During GameObject teardown the listener may already be unavailable.
+        if (stoppingThread != null && messageListener != null)
+            messageListener.SendMessage(
+                "OnConnectionEvent",
+                false,
+                SendMessageOptions.DontRequireReceiver);
+
+        pollingConnectionObserved = false;
+        serialThread = null;
     }
 
     // ------------------------------------------------------------------------
@@ -119,9 +129,16 @@ public class SerialController : MonoBehaviour
 
         // Check if the message is plain data or a connect/disconnect event.
         if (ReferenceEquals(message, SERIAL_DEVICE_CONNECTED))
+        {
             messageListener.SendMessage("OnConnectionEvent", true);
+            if (serialThread != null)
+                serialThread.EnableOutputForCurrentConnection();
+        }
         else if (ReferenceEquals(message, SERIAL_DEVICE_DISCONNECTED))
+        {
+            pollingConnectionObserved = false;
             messageListener.SendMessage("OnConnectionEvent", false);
+        }
         else
             messageListener.SendMessage("OnMessageArrived", message);
     }
@@ -133,7 +150,12 @@ public class SerialController : MonoBehaviour
     public string ReadSerialMessage()
     {
         // Read the next message from the queue
-        return (string)serialThread.ReadMessage();
+        string message = (string)serialThread.ReadMessage();
+        if (ReferenceEquals(message, SERIAL_DEVICE_CONNECTED))
+            pollingConnectionObserved = true;
+        else if (ReferenceEquals(message, SERIAL_DEVICE_DISCONNECTED))
+            pollingConnectionObserved = false;
+        return message;
     }
 
     // ------------------------------------------------------------------------
@@ -143,12 +165,33 @@ public class SerialController : MonoBehaviour
     public void SendSerialMessage(string message)
     {
         serialThread.SendMessage(message);
+        EnableOutputAfterPollingConnectionEvent();
     }
 
     // Sends state that supersedes any older state still waiting to be written.
     public void SendLatestSerialMessage(string message)
     {
+        if (serialThread == null)
+            return;
+
         serialThread.SendLatestMessage(message);
+        EnableOutputAfterPollingConnectionEvent();
+    }
+
+    public string ReadSentSerialMessage()
+    {
+        return serialThread == null
+            ? null
+            : (string)serialThread.ReadSentMessage();
+    }
+
+    private void EnableOutputAfterPollingConnectionEvent()
+    {
+        if (!pollingConnectionObserved || serialThread == null)
+            return;
+
+        pollingConnectionObserved = false;
+        serialThread.EnableOutputForCurrentConnection();
     }
 
     // ------------------------------------------------------------------------

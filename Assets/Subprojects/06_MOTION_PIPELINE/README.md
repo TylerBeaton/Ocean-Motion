@@ -1,4 +1,4 @@
-# Subproject 06 — Motion Pipeline
+# Subproject 06 — Motion Pipeline and Serial Transport
 
 ## Purpose and boundary
 
@@ -6,16 +6,18 @@ Convert Subproject 05's calibrated boat telemetry into deterministic, bounded pl
 
 ```text
 SP05 telemetry → gains → pose limits → velocity limits → acceleration limits
-→ optional smoothing → bounded pose command
+→ optional smoothing → bounded pose command → versioned serial packet
 ```
 
-This milestone does **not** select an actuator architecture, solve Stewart-platform inverse kinematics, or drive physical hardware. Its output remains an architecture-neutral pose contract for later serial and actuator experiments.
+This milestone does **not** select an actuator architecture, solve Stewart-platform inverse kinematics, or drive physical hardware. It now transports the architecture-neutral pose contract to an Arduino receiver for communication validation, but the firmware intentionally contains no actuator objects, output pins, PWM writes, or motor commands.
 
 ## Dependency and reuse status
 
 - Depends on `BoatMotionTelemetry` from Subproject 05 as its calibrated simulation source.
 - Preserves Subproject 05 unchanged; the SP06 scene references reusable SP05 assets and scripts.
 - `MotionPoseSample`, `MotionPipelineSettings`, `MotionPoseProcessor`, `MotionPoseCommand`, and `MotionLimitFlags` are reusable downstream.
+- `MotionTransportProtocol` and `MotionTransportSession` provide a versioned, architecture-neutral transport boundary reusable by later mechanism-specific stages.
+- Paired receiver firmware is archived at `Arduino/06_UNITY_MOTION_TRANSPORT/06_UNITY_MOTION_TRANSPORT.ino`; its implementation is in the companion `MotionTransportFirmware.cpp` to avoid host-specific Arduino prototype generation.
 - The raw/processed pose proxies are display-only diagnostics and are not part of the source boat's physics hierarchy.
 
 ## Motion contract
@@ -57,6 +59,25 @@ After a stale, invalid, or disabled interval, the first recovered sample uses on
 
 Runtime Inspector setting changes update the processor configuration without resetting its motion state. A newly tightened velocity limit is enforced as a hard bound immediately, even when doing so takes priority over the configured acceleration limit. Disabling smoothing reconciles the limiter state to the actual published pose and rate before continuing, avoiding an unsmoothed catch-up jump. Non-finite settings or negative smoothing times produce a finite invalid command with `InvalidSettings`.
 
+## Serial transport contract
+
+- Board: Arduino UNO R4 WiFi.
+- Baud rate: `115200`, newline-delimited ASCII.
+- Send cadence: `20 Hz` using unscaled host time.
+- Queue policy: latest-state delivery; stale unsent poses are replaced rather than accumulated.
+- Source freshness: the source sequence must advance within `250 ms` of unscaled realtime. This remains enforced when `Time.timeScale == 0`; a stalled source produces STOP rather than refreshing the firmware watchdog with a frozen pose.
+- Handshake: Unity sends `OM1,HELLO` once per second until a wire-confirmed HELLO causes firmware to reply `OM1,READY`. Firmware sends no unsolicited READY at boot and rejects POSE before HELLO.
+- Pose: `OM1,POSE,<transportSeq>,<sourceSeq>,<heave>,<pitch>,<yaw>,<roll>`.
+- Acknowledgement: `OM1,ACK,<transportSeq>`.
+- Stop: Unity sends `OM1,STOP` every `250 ms` until firmware replies `OM1,STOPPED`; pose transmission cannot resume before that reply.
+- Watchdog: firmware reports `OM1,WATCHDOG` after `250 ms` without a valid pose.
+- Errors: firmware reports `OM1,ERR,<reason>` for malformed, non-finite, out-of-range, oversized, pre-handshake, or out-of-order records. Every protocol error latches the receiver safe and requires a fresh handshake.
+- Recovery: a protocol error or transport-sequence rollover closes the pose gate and requires a fresh HELLO/READY exchange. Ardity also clears and gates its queues across reconnect so neither a stale POSE nor stale ACK can cross connection generations.
+
+The firmware independently rejects commands outside the saved SP06 software envelope: heave `±0.25 m`, pitch `±10°`, yaw `±5°`, and roll `±10°`. These remain provisional software-test limits, not approved physical mechanism limits.
+
+The saved scene contains `SP06 Serial Transport (Hardware Disabled)`. Its `SerialController` is disabled and uses `/dev/cu.usbmodem-SET-ME` so opening the scene cannot accidentally claim a port. Select the actual port and enable that component only during the hardware test.
+
 ## Unfiltered and smoothed response measurements
 
 The responsive preset was measured with deterministic step tests at 50 Hz. The unfiltered test also produced identical timings at 100 Hz.
@@ -72,7 +93,9 @@ Manual visual comparison confirmed that enabled smoothing softens the processed 
 
 `MotionPipelinePoseDisplay` drives independent raw and processed proxy roots from their authored neutral local poses. Both proxies may overlap for direct comparison; contrasting materials and visual scale differences make them distinguishable.
 
-Runtime telemetry and command diagnostics are shown through read-only custom Inspectors backed directly by `LatestSample` and `LatestCommand`. They are not serialized into the scene, preventing stale Play-mode values and flags from being mistaken for live state.
+Runtime telemetry, command, and transport diagnostics are shown through read-only custom Inspectors backed directly by the current records. Transport shows connection/readiness, STOP confirmation, ACK count and last acknowledged sequence, watchdog trips, protocol errors, and the last device message. ACK and fault counts remain cumulative across reconnects; the last sequence and latency sample reset at a new handshake. Diagnostics are not serialized into the scene.
+
+Application-level ACK latency is sampled only when an ACK matches the latest generated pose. It includes host queue and Unity frame delays, not just serial transit. Older ACKs can advance the count but do not update this sample; zero means no sample yet. This deliberately does not measure packet loss, per-packet timeouts, or average/maximum wire RTT. Successful-write notifications remain solely to gate HELLO/READY, not to classify every pose's delivery outcome.
 
 ## Verification status
 
@@ -89,7 +112,47 @@ Automated checks cover:
 - runtime setting changes without processor-state reset;
 - hard published velocity bounds while smoothing remains enabled;
 - smoothing-disable continuity while the published pose lags limiter state;
-- display mapping and hierarchy separation.
+- display mapping and hierarchy separation;
+- invariant packet formatting, exact firmware-envelope validation, realtime source freshness, handshake/reconnect gating, `20 Hz` scheduling, retried STOP/STOPPED recovery, application-level acknowledgement sampling, duplicate/stale ACK rejection, and latest-state queue replacement;
+- host-native firmware parser and receiver-state tests for valid, malformed, non-finite, range, sequence-overflow, exact-duplicate, conflicting-duplicate, and out-of-order cases;
+- UNO R4 WiFi firmware compilation with actuator output APIs absent;
+- saved serial scene references, `115200` baud, disabled-by-default state, placeholder port, and acknowledgement queue depth.
+
+After accounting simplification: `60/60` isolated Unity EditMode tests passed, and the serial Editor check routine completed successfully, including custom-delimiter output, reconnect-buffer reset, component re-enable, and unavailable-listener teardown regressions. Its success marker is not a count of independently reported tests. `git diff --check` passed and SP05 remains unchanged.
+
+Earlier firmware verification (firmware unchanged by this simplification): native C++ tests passed with `-Wall -Wextra -Werror`, and the UNO R4 WiFi build succeeded. The reported build used `60,412` bytes of flash (`23%`) and `7,228` bytes of RAM (`22%`); the replacement ARM toolchain emitted newlib syscall linker warnings. The transport-only firmware was subsequently uploaded and exercised in the Unity-to-UNO validation below.
+
+### SP06.1 Unity-to-UNO transport result — 2026-09-21
+
+The physical validation used Unity `6000.5.7f1`, one Arduino UNO R4 WiFi at `/dev/cu.usbmodem3CDC754A58082`, and `115200` baud. Servos, displays, actuator drivers, relays, and actuator signal wires remained disconnected. The firmware remained the transport-only SP06 baseline; `STOP` and watchdog reports were treated as protocol state, not physical neutral or power removal.
+
+| Check | Observed result |
+|---|---|
+| Five-minute focused run | Passed. The POSE sequence high-water mark and acknowledged-pose count were `5915 / 5915`, equivalent to `19.72 Hz` over `300 s`. The final sampled application-level ACK latency was `8.40 ms`; this is neither an average nor a worst-case bound. Watchdog trips and protocol errors were both `0`. |
+| ACK continuity | No ACK gap was indicated during the focused run: `5915` acknowledged poses against last ACK sequence `5915` (`0%` observed missing ACKs). This diagnostic result is not a timestamped wire capture and does not prove zero physical packet loss. |
+| Stale source | Passed. Setting `Time.timeScale = 0` produced `OM1,STOPPED`, cleared the pending STOP state, and settled the ACK count at `2530`. Restoring time scale resumed ACK growth without reconnecting. |
+| Focus interruption | Six deliberate switches away from Unity produced six watchdog reports because `runInBackground: 0` lets the update loop pause for longer than the firmware's `250 ms` timeout. Returning focus resumed transport. These events are separate from uninterrupted reliability. |
+| USB disconnect/reconnect | Passed without restarting Play mode. Unity observed disconnect and reconnect, completed a fresh `OM1,READY` handshake, restored connected/ready state, and resumed ACK growth with `0` protocol errors. One `OM1,WATCHDOG` occurred at the deliberate reconnect boundary after READY; it did not affect the focused run's zero-watchdog result or prevent recovery. |
+| Play-mode teardown | Passed after making Ardity's final disconnect notification tolerant of an already-disabled listener. Play mode exited without `SendMessage OnConnectionEvent has no receiver!`, and `lsof /dev/cu.usbmodem3CDC754A58082` returned no owner. |
+| Saved baseline | Passed. The serial Editor check completed, the scene was restored to its disabled placeholder-port state, and the authoritative Mac working tree was clean. |
+
+### Apple-silicon command-line toolchain
+
+Arduino's bundled Renesas compiler and `bossac` uploader on this development host are Intel-only. Compatible native compile tools are installed at:
+
+- compiler: `~/Library/Arduino15/native-tools/gcc-arm-embedded/bin/`
+- ctags: `$(brew --prefix ctags)/bin`
+
+Use those paths through Arduino CLI build-property overrides. The compile command below has been exercised. A compatible native `bossac` installation was attempted but did not install successfully, so command-line upload is not yet verified; board enumeration and upload remain part of the physical test.
+
+```bash
+CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
+"$CLI" compile --fqbn arduino:renesas_uno:unor4wifi --warnings all \
+  --build-property "build.compiler_path=$HOME/Library/Arduino15/native-tools/gcc-arm-embedded/bin/" \
+  --build-property "runtime.tools.ctags.path=$(brew --prefix ctags)/bin" \
+  --build-property "compiler.c.extra_flags=-Wno-error=return-mismatch" \
+  Arduino/06_UNITY_MOTION_TRANSPORT
+```
 
 Manual Play-mode checks completed:
 
@@ -100,6 +163,23 @@ Manual Play-mode checks completed:
 - raw and processed proxies visualize the expected neutral-relative motion;
 - smoothing defaults off and behaves as measured when temporarily enabled.
 
+## Hardware validation checklist
+
+1. Connect only the UNO R4 WiFi by USB; do not connect servos, motor drivers, signal leads, or actuator power.
+2. Stop Unity Play mode and close Arduino Serial Monitor/Plotter and every other serial terminal. Confirm only one program can own the port.
+3. Upload `Arduino/06_UNITY_MOTION_TRANSPORT/06_UNITY_MOTION_TRANSPORT.ino` for **Arduino UNO R4 WiFi**. Start with Arduino IDE after selecting the detected `/dev/cu.usbmodem…` port. If its bundled uploader fails on this host, stop and resolve the uploader compatibility separately; a successful compile is not proof of upload.
+4. With Unity stopped, open a serial terminal at `115200` using either LF or CRLF line endings. Require no unsolicited READY. Send a valid POSE before HELLO and require `OM1,ERR,HANDSHAKE`. Send `OM1,HELLO`; require exactly `OM1,READY`.
+5. Send `OM1,POSE,1,1,0.10000,1.00000,2.00000,3.00000`; require `OM1,ACK,1`. Send the exact packet again and require the same ACK. Send the same transport sequence with a changed pose and require `OM1,ERR,SEQUENCE`; then send a new valid POSE and require `OM1,ERR,HANDSHAKE` until another HELLO/READY completes.
+6. Send separate malformed probes, waiting at least `50 ms` between them: `BAD` → `OM1,ERR,FORMAT`; `OM1,POSE,2,2,nan,0,0,0` → `OM1,ERR,NONFINITE`; `OM1,POSE,2,2,0.25001,0,0,0` → `OM1,ERR,RANGE`.
+7. Send `OM1,HELLO`, then one valid pose. Stop sending for more than `250 ms`; require one `OM1,WATCHDOG`. Send `OM1,STOP`; require `OM1,STOPPED`. Close the terminal before Unity claims the port.
+8. In `SP06_Motion_Pipeline`, select `SP06 Serial Transport (Hardware Disabled)`, replace `/dev/cu.usbmodem-SET-ME` with the current port, and enable only its `SerialController` component.
+9. Enter Play mode. Require `Port Connected` and `Firmware Ready`. During healthy motion, require increasing ACK count and sequence, watchdog trips `0`, and protocol errors `0`. Record available application-level ACK latency samples; they are not a worst-case latency guarantee.
+10. Freeze simulation with `Time.timeScale = 0` while Play mode and serial remain active. Within roughly `0.5 s`, require `OM1,STOPPED` as the last device message and the ACK count to settle. Restore time scale and require fresh source motion to resume acknowledged poses.
+11. While streaming, unplug and reconnect USB. Require the connection/readiness indicators to drop, then a fresh HELLO/READY before pose acknowledgements resume; require no protocol error or stale ACK attribution. Also disable/re-enable `MotionSerialTransport` with the port connected and require a new handshake. If macOS assigns a different device name, exit Play mode, disable `SerialController`, change the port, then re-enable it so the worker is recreated with the new name.
+12. Exit and re-enter Play mode to reset cumulative diagnostics, then run for at least five minutes while moving the simulated boat. Require continued ACK progress, no unexplained stalls or disconnects, zero unexpected watchdog trips, and zero protocol errors. Record duration, ACK totals, available application-level latency samples, and observed issues. This is a functional endurance check, not proof of zero packet loss or bounded worst-case latency; those require separate timestamped capture if needed later.
+
+Do not open Arduino Serial Monitor while Unity owns the port. Before any future actuator firmware is introduced, restore the scene's disabled serial default and define mechanism-specific travel, fault posture, power, and emergency-stop limits.
+
 ## Next integration boundary
 
-The next stage may serialize bounded pose commands to an Arduino at a measured target rate, with acknowledgements and a transport watchdog. Actuator outputs must remain disabled during transport validation. Inverse kinematics and physical motion remain separate downstream stages.
+SP06.1's Unity-to-UNO transport gate is accepted. Preserve its simulation, conditioning, transport, firmware, and physical-output boundaries when starting the next milestone. Mechanism-specific inverse kinematics or actuator commands require their own limits, calibration, fault posture, power plan, and emergency-stop gate; physical motion remains explicitly out of scope for this checkpoint.

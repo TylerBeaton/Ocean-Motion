@@ -49,4 +49,47 @@ namespace OceanMotion.Subproject06.Editor
             }
         }
     }
+
+    [CustomEditor(typeof(MotionSerialTransport))]
+    public sealed class MotionSerialTransportEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            DrawDefaultInspector();
+
+            var transport = (MotionSerialTransport)target;
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(
+                "Serial Transport (Runtime Diagnostics)",
+                EditorStyles.boldLabel);
+            using (new EditorGUI.DisabledScope(true))
+            {
+                EditorGUILayout.IntField("Required Baud", transport.RequiredBaudRate);
+                EditorGUILayout.Toggle("Port Connected", transport.IsConnected);
+                EditorGUILayout.Toggle("Firmware Ready", transport.IsFirmwareReady);
+                EditorGUILayout.Toggle(
+                    "Awaiting STOPPED",
+                    transport.AwaitingStopConfirmation);
+                EditorGUILayout.LongField(
+                    "Poses Acknowledged",
+                    transport.AcknowledgedPoseCount);
+                EditorGUILayout.LongField(
+                    "Last ACK Sequence",
+                    transport.LastAcknowledgedSequence);
+                EditorGUILayout.DoubleField(
+                    "Last Sampled App ACK (ms)",
+                    transport.LastAcknowledgementLatencyMilliseconds);
+                EditorGUILayout.LongField(
+                    "Firmware Watchdog Trips",
+                    transport.WatchdogTripCount);
+                EditorGUILayout.LongField(
+                    "Firmware Protocol Errors",
+                    transport.ProtocolErrorCount);
+                EditorGUILayout.TextField(
+                    "Last Device Message",
+                    transport.LastDeviceMessage ?? string.Empty);
+            }
+        }
+    }
 }
