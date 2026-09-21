@@ -33,6 +33,9 @@ void setup()
     Serial.begin(115200);
 }
 
+
+
+
 void loop()
 {
     checkCommandWatchdog();
@@ -157,24 +160,25 @@ namespace
         }
     }
 
-    bool sendLiteral(const char* message)
-    {
-        size_t requiredBytes = strlen(message) + 2;
-        if (Serial.availableForWrite() < static_cast<int>(requiredBytes))
-            return false;
+bool sendLiteral(const char* message)
+{
+    if (!Serial)
+        return false;
 
-        Serial.println(message);
-        return true;
-    }
+    size_t expectedBytes = strlen(message) + 2;
+    return Serial.println(message) == expectedBytes;
+}
 
-    void sendAcknowledgement(uint32_t transportSequence)
-    {
-        if (Serial.availableForWrite() < 24)
-            return;
 
-        Serial.print("OM1,ACK,");
-        Serial.println(transportSequence);
-    }
+void sendAcknowledgement(uint32_t transportSequence)
+{
+    if (!Serial)
+        return;
+
+    Serial.print("OM1,ACK,");
+    Serial.println(transportSequence);
+}
+
 
     void checkCommandWatchdog()
     {
