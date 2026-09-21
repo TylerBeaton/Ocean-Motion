@@ -118,9 +118,23 @@ Automated checks cover:
 - UNO R4 WiFi firmware compilation with actuator output APIs absent;
 - saved serial scene references, `115200` baud, disabled-by-default state, placeholder port, and acknowledgement queue depth.
 
-After accounting simplification: `60/60` isolated Unity EditMode tests passed, and the serial Editor check routine completed successfully, including custom-delimiter output, reconnect-buffer reset, and component re-enable regressions. Its success marker is not a count of independently reported tests. `git diff --check` passed and SP05 remains unchanged.
+After accounting simplification: `60/60` isolated Unity EditMode tests passed, and the serial Editor check routine completed successfully, including custom-delimiter output, reconnect-buffer reset, component re-enable, and unavailable-listener teardown regressions. Its success marker is not a count of independently reported tests. `git diff --check` passed and SP05 remains unchanged.
 
-Earlier firmware verification (firmware unchanged by this simplification): native C++ tests passed with `-Wall -Wextra -Werror`, and the UNO R4 WiFi build succeeded. The reported build used `60,412` bytes of flash (`23%`) and `7,228` bytes of RAM (`22%`); the replacement ARM toolchain emitted newlib syscall linker warnings. Physical upload and serial behavior remain unverified until the checklist below is run.
+Earlier firmware verification (firmware unchanged by this simplification): native C++ tests passed with `-Wall -Wextra -Werror`, and the UNO R4 WiFi build succeeded. The reported build used `60,412` bytes of flash (`23%`) and `7,228` bytes of RAM (`22%`); the replacement ARM toolchain emitted newlib syscall linker warnings. The transport-only firmware was subsequently uploaded and exercised in the Unity-to-UNO validation below.
+
+### SP06.1 Unity-to-UNO transport result — 2026-09-21
+
+The physical validation used Unity `6000.5.7f1`, one Arduino UNO R4 WiFi at `/dev/cu.usbmodem3CDC754A58082`, and `115200` baud. Servos, displays, actuator drivers, relays, and actuator signal wires remained disconnected. The firmware remained the transport-only SP06 baseline; `STOP` and watchdog reports were treated as protocol state, not physical neutral or power removal.
+
+| Check | Observed result |
+|---|---|
+| Five-minute focused run | Passed. The POSE sequence high-water mark and acknowledged-pose count were `5915 / 5915`, equivalent to `19.72 Hz` over `300 s`. The final sampled application-level ACK latency was `8.40 ms`; this is neither an average nor a worst-case bound. Watchdog trips and protocol errors were both `0`. |
+| ACK continuity | No ACK gap was indicated during the focused run: `5915` acknowledged poses against last ACK sequence `5915` (`0%` observed missing ACKs). This diagnostic result is not a timestamped wire capture and does not prove zero physical packet loss. |
+| Stale source | Passed. Setting `Time.timeScale = 0` produced `OM1,STOPPED`, cleared the pending STOP state, and settled the ACK count at `2530`. Restoring time scale resumed ACK growth without reconnecting. |
+| Focus interruption | Six deliberate switches away from Unity produced six watchdog reports because `runInBackground: 0` lets the update loop pause for longer than the firmware's `250 ms` timeout. Returning focus resumed transport. These events are separate from uninterrupted reliability. |
+| USB disconnect/reconnect | Passed without restarting Play mode. Unity observed disconnect and reconnect, completed a fresh `OM1,READY` handshake, restored connected/ready state, and resumed ACK growth with `0` protocol errors. One `OM1,WATCHDOG` occurred at the deliberate reconnect boundary after READY; it did not affect the focused run's zero-watchdog result or prevent recovery. |
+| Play-mode teardown | Passed after making Ardity's final disconnect notification tolerant of an already-disabled listener. Play mode exited without `SendMessage OnConnectionEvent has no receiver!`, and `lsof /dev/cu.usbmodem3CDC754A58082` returned no owner. |
+| Saved baseline | Passed. The serial Editor check completed, the scene was restored to its disabled placeholder-port state, and the authoritative Mac working tree was clean. |
 
 ### Apple-silicon command-line toolchain
 
@@ -168,4 +182,4 @@ Do not open Arduino Serial Monitor while Unity owns the port. Before any future 
 
 ## Next integration boundary
 
-Complete the hardware checklist above and record ACK progress, available latency samples, reconnect, and watchdog results. Only after that transport gate passes may a later stage introduce mechanism-specific inverse kinematics or actuator commands. Physical motion remains explicitly out of scope for this checkpoint.
+SP06.1's Unity-to-UNO transport gate is accepted. Preserve its simulation, conditioning, transport, firmware, and physical-output boundaries when starting the next milestone. Mechanism-specific inverse kinematics or actuator commands require their own limits, calibration, fault posture, power plan, and emergency-stop gate; physical motion remains explicitly out of scope for this checkpoint.
