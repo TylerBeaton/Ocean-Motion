@@ -140,6 +140,7 @@ namespace OceanMotion.Subproject06.Editor
                 Require(
                     !(bool)GetProperty(transport, "IsConnected"),
                     "SerialController disable did not notify its listener after teardown.");
+                CheckSilentListenerTeardown(serialController);
 
                 serialController.baudRate = 9600;
                 Require(
@@ -155,6 +156,39 @@ namespace OceanMotion.Subproject06.Editor
             {
                 UnityEngine.Object.DestroyImmediate(testObject);
             }
+        }
+
+        private static void CheckSilentListenerTeardown(SerialController serialController)
+        {
+            GameObject unavailableListener = new GameObject(
+                "SP06 Unavailable Serial Listener");
+            unavailableListener.SetActive(false);
+            bool missingReceiverError = false;
+
+            void CaptureLog(string condition, string stackTrace, LogType type)
+            {
+                if (condition.Contains("SendMessage OnConnectionEvent has no receiver"))
+                    missingReceiverError = true;
+            }
+
+            try
+            {
+                serialController.messageListener = unavailableListener;
+                SetProtected(
+                    serialController,
+                    "serialThread",
+                    new SerialThreadLines("unused", 115200, 1000, 1));
+                Application.logMessageReceived += CaptureLog;
+                Invoke(serialController, "OnDisable");
+            }
+            finally
+            {
+                Application.logMessageReceived -= CaptureLog;
+                UnityEngine.Object.DestroyImmediate(unavailableListener);
+            }
+
+            Require(!missingReceiverError,
+                "SerialController teardown required an unavailable listener.");
         }
 
         private static void CheckReconnectBuffer(string staleInput)

@@ -98,9 +98,12 @@ public class SerialController : MonoBehaviour
             thread = null;
         }
 
-        // Notify listeners before clearing the worker reference.
+        // During GameObject teardown the listener may already be unavailable.
         if (stoppingThread != null && messageListener != null)
-            messageListener.SendMessage("OnConnectionEvent", false);
+            messageListener.SendMessage(
+                "OnConnectionEvent",
+                false,
+                SendMessageOptions.DontRequireReceiver);
 
         pollingConnectionObserved = false;
         serialThread = null;
