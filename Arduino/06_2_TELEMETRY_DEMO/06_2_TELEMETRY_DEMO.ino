@@ -4,12 +4,13 @@
   Board: Arduino UNO R4 WiFi
   Serial: 115200 baud, newline-delimited ASCII
   LCD: 16x2 I2C display at 0x27
-  Servo: signal D6, external 5 V supply, shared ground
+  Pitch servo: signal D6, external 5 V supply, shared ground
+  Roll servo: signal D5, external 5 V supply, shared ground
   Common-cathode RGB LED: red D11, green D10, blue D9
 
-  This is a one-servo milestone demonstration, not the final actuator
-  architecture. The servo follows bounded pitch telemetry only. STOP,
-  watchdog, and protocol faults centre the servo but do not remove power.
+  This is a two-servo milestone demonstration, not the final actuator
+  architecture. The servos follow bounded pitch and roll telemetry. STOP,
+  watchdog, and protocol faults centre both servos but do not remove power.
 */
 
 #include <Arduino.h>
@@ -31,7 +32,8 @@ namespace
     const size_t maximumBytesPerLoop = 64;
     const size_t maximumMessagesPerLoop = 4;
 
-    const uint8_t servoPin = 6;
+    const uint8_t pitchServoPin = 6;
+    const uint8_t rollServoPin = 5;
     const uint8_t redPin = 11;
     const uint8_t greenPin = 10;
     const uint8_t bluePin = 9;
@@ -64,7 +66,8 @@ namespace
     };
 
     LiquidCrystal_I2C lcd(0x27, 16, 2);
-    Servo demoServo;
+    Servo pitchServo;
+    Servo rollServo;
 
     char inputBuffer[160];
     size_t inputLength = 0;
@@ -91,7 +94,7 @@ namespace
     void showWaiting();
     void showStopped(const char* reason);
     void showFault(const char* reason);
-    void centerServo();
+    void centerServos();
     void setRgb(bool red, bool green, bool blue);
     void clearRow(uint8_t row);
     void printSigned(float value, uint8_t digits);
@@ -108,8 +111,9 @@ void setup()
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
 
-    demoServo.attach(servoPin);
-    centerServo();
+    pitchServo.attach(pitchServoPin);
+    rollServo.attach(rollServoPin);
+    centerServos();
 
     Wire.begin();
     lcd.init();
@@ -328,7 +332,7 @@ namespace
         streamActive = false;
         hasLatestPacket = false;
         latestPacket = MotionPosePacket{};
-        centerServo();
+        centerServos();
     }
 
     void failClosed()
@@ -337,20 +341,27 @@ namespace
         streamActive = false;
         hasLatestPacket = false;
         latestPacket = MotionPosePacket{};
-        centerServo();
+        centerServos();
     }
 
     void applyPose(const MotionPosePacket& packet)
     {
-        // Pitch is already constrained to +/-10 degrees. Map that contract
-        // to the previously verified, unloaded demo range of 70 to 110.
-        int servoAngle = static_cast<int>(
+        // Pitch and roll are constrained to +/-10 degrees. Map both axes to
+        // the previously verified, unloaded demo range of 70 to 110.
+        int pitchServoAngle = static_cast<int>(
             servoCenterDegrees + packet.pitchDegrees * 2.0f);
-        servoAngle = constrain(servoAngle,
-                               servoMinimumDegrees,
-                               servoMaximumDegrees);
+        pitchServoAngle = constrain(pitchServoAngle,
+                                    servoMinimumDegrees,
+                                    servoMaximumDegrees);
 
-        demoServo.write(servoAngle);
+        int rollServoAngle = static_cast<int>(
+            servoCenterDegrees + packet.rollDegrees * 2.0f);
+        rollServoAngle = constrain(rollServoAngle,
+                                   servoMinimumDegrees,
+                                   servoMaximumDegrees);
+
+        pitchServo.write(pitchServoAngle);
+        rollServo.write(rollServoAngle);
         setRgb(false, true, false);
 
         // Serial remains at 20 Hz; the LCD is deliberately limited to 10 Hz.
@@ -386,7 +397,7 @@ namespace
 
     void showStopped(const char* reason)
     {
-        centerServo();
+        centerServos();
         setRgb(true, false, false);
 
         clearRow(0);
@@ -398,7 +409,7 @@ namespace
 
     void showFault(const char* reason)
     {
-        centerServo();
+        centerServos();
         setRgb(true, false, false);
 
         clearRow(0);
@@ -408,9 +419,10 @@ namespace
         lcd.print(reason);
     }
 
-    void centerServo()
+    void centerServos()
     {
-        demoServo.write(servoCenterDegrees);
+        pitchServo.write(servoCenterDegrees);
+        rollServo.write(servoCenterDegrees);
     }
 
     void setRgb(bool red, bool green, bool blue)
