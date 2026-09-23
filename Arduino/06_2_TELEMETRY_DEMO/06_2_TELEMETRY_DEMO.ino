@@ -40,16 +40,16 @@ namespace
     const uint8_t bluePin = 9;
 
     const int servoCenterDegrees = 90;
-    const int servoMinimumDegrees = 70;
-    const int servoMaximumDegrees = 110;
-    const uint16_t servoMinimumPulse = 287;
+    const int servoMinimumDegrees = 20;
+    const int servoMaximumDegrees = 160;
+    const uint16_t servoMinimumPulse = 235;
     const uint16_t servoCenterPulse = 307;
-    const uint16_t servoMaximumPulse = 328;
+    const uint16_t servoMaximumPulse = 379;
 
     const float maximumHeaveMeters = 0.25f;
-    const float maximumPitchDegrees = 10.0f;
+    const float maximumPitchDegrees = 70.0f;
     const float maximumYawDegrees = 5.0f;
-    const float maximumRollDegrees = 10.0f;
+    const float maximumRollDegrees = 70.0f;
 
     struct MotionPosePacket
     {
@@ -350,16 +350,16 @@ namespace
 
     void applyPose(const MotionPosePacket& packet)
     {
-        // Pitch and roll are constrained to +/-10 degrees. Map both axes to
-        // the previously verified, unloaded demo range of 70 to 110.
+        // Pitch and roll are constrained to +/-70 degrees. Map both axes
+        // directly to the experimental 20-to-160-degree servo range.
         int pitchServoAngle = static_cast<int>(
-            servoCenterDegrees + packet.pitchDegrees * 2.0f);
+            servoCenterDegrees + packet.pitchDegrees);
         pitchServoAngle = constrain(pitchServoAngle,
                                     servoMinimumDegrees,
                                     servoMaximumDegrees);
 
         int rollServoAngle = static_cast<int>(
-            servoCenterDegrees + packet.rollDegrees * 2.0f);
+            servoCenterDegrees + packet.rollDegrees);
         rollServoAngle = constrain(rollServoAngle,
                                    servoMinimumDegrees,
                                    servoMaximumDegrees);

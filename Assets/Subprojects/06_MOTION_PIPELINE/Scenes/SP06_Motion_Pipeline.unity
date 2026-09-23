@@ -4332,7 +4332,7 @@ MonoBehaviour:
     translationGain: {x: 1, y: 1, z: 1}
     rotationGain: {x: 1, y: 1, z: 1}
     translationLimitMeters: {x: 0, y: 0.25, z: 0}
-    rotationLimitDegrees: {x: 10, y: 5, z: 10}
+    rotationLimitDegrees: {x: 70, y: 5, z: 70}
     translationVelocityLimitMetersPerSecond: {x: 0, y: 0.75, z: 0}
     rotationVelocityLimitDegreesPerSecond: {x: 90, y: 45, z: 90}
     translationAccelerationLimitMetersPerSecondSquared: {x: 0, y: 3, z: 0}
