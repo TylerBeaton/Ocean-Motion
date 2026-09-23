@@ -61,9 +61,9 @@ namespace OceanMotion.Subproject06.Tests
         [TestCase(1u, 0ul, 0f, 0f, 0f, 0f)]
         [TestCase(1u, 1ul, 0.25001f, 0f, 0f, 0f)]
         [TestCase(1u, 1ul, -0.25001f, 0f, 0f, 0f)]
-        [TestCase(1u, 1ul, 0f, 10.001f, 0f, 0f)]
+        [TestCase(1u, 1ul, 0f, 70.001f, 0f, 0f)]
         [TestCase(1u, 1ul, 0f, 0f, -5.001f, 0f)]
-        [TestCase(1u, 1ul, 0f, 0f, 0f, -10.001f)]
+        [TestCase(1u, 1ul, 0f, 0f, 0f, -70.001f)]
         public void TryFormatPose_RejectsPacketsOutsideFirmwareContract(
             uint transportSequence,
             ulong sourceSequence,
@@ -93,7 +93,7 @@ namespace OceanMotion.Subproject06.Tests
         {
             var command = new MotionPoseCommand(
                 new Vector3(0f, -0.25f, 0f),
-                new Vector3(10f, -5f, -10f),
+                new Vector3(70f, -5f, -70f),
                 1,
                 0d,
                 true);
