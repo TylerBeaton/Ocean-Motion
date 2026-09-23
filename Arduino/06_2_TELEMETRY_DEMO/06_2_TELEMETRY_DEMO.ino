@@ -4,8 +4,9 @@
   Board: Arduino UNO R4 WiFi
   Serial: 115200 baud, newline-delimited ASCII
   LCD: 16x2 I2C display at 0x27
-  Pitch servo: signal D6, external 5 V supply, shared ground
-  Roll servo: signal D5, external 5 V supply, shared ground
+  PCA9685: I2C address 0x40, external 5 V servo supply, shared ground
+  Pitch servo: PCA9685 channel 0
+  Roll servo: PCA9685 channel 1
   Common-cathode RGB LED: red D11, green D10, blue D9
 
   This is a two-servo milestone demonstration, not the final actuator
@@ -16,7 +17,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <Servo.h>
+#include <Adafruit_PWMServoDriver.h>
 
 #include <errno.h>
 #include <math.h>
@@ -32,8 +33,8 @@ namespace
     const size_t maximumBytesPerLoop = 64;
     const size_t maximumMessagesPerLoop = 4;
 
-    const uint8_t pitchServoPin = 6;
-    const uint8_t rollServoPin = 5;
+    const uint8_t pitchServoChannel = 0;
+    const uint8_t rollServoChannel = 1;
     const uint8_t redPin = 11;
     const uint8_t greenPin = 10;
     const uint8_t bluePin = 9;
@@ -41,6 +42,9 @@ namespace
     const int servoCenterDegrees = 90;
     const int servoMinimumDegrees = 70;
     const int servoMaximumDegrees = 110;
+    const uint16_t servoMinimumPulse = 287;
+    const uint16_t servoCenterPulse = 307;
+    const uint16_t servoMaximumPulse = 328;
 
     const float maximumHeaveMeters = 0.25f;
     const float maximumPitchDegrees = 10.0f;
@@ -66,8 +70,7 @@ namespace
     };
 
     LiquidCrystal_I2C lcd(0x27, 16, 2);
-    Servo pitchServo;
-    Servo rollServo;
+    Adafruit_PWMServoDriver pwm(0x40);
 
     char inputBuffer[160];
     size_t inputLength = 0;
@@ -111,11 +114,12 @@ void setup()
     pinMode(greenPin, OUTPUT);
     pinMode(bluePin, OUTPUT);
 
-    pitchServo.attach(pitchServoPin);
-    rollServo.attach(rollServoPin);
+    Wire.begin();
+    pwm.begin();
+    pwm.setPWMFreq(50);
+    delay(10);
     centerServos();
 
-    Wire.begin();
     lcd.init();
     lcd.backlight();
     showWaiting();
@@ -360,8 +364,21 @@ namespace
                                    servoMinimumDegrees,
                                    servoMaximumDegrees);
 
-        pitchServo.write(pitchServoAngle);
-        rollServo.write(rollServoAngle);
+        uint16_t pitchPulse = static_cast<uint16_t>(map(
+            pitchServoAngle,
+            servoMinimumDegrees,
+            servoMaximumDegrees,
+            servoMinimumPulse,
+            servoMaximumPulse));
+        uint16_t rollPulse = static_cast<uint16_t>(map(
+            rollServoAngle,
+            servoMinimumDegrees,
+            servoMaximumDegrees,
+            servoMinimumPulse,
+            servoMaximumPulse));
+
+        pwm.setPWM(pitchServoChannel, 0, pitchPulse);
+        pwm.setPWM(rollServoChannel, 0, rollPulse);
         setRgb(false, true, false);
 
         // Serial remains at 20 Hz; the LCD is deliberately limited to 10 Hz.
@@ -421,8 +438,8 @@ namespace
 
     void centerServos()
     {
-        pitchServo.write(servoCenterDegrees);
-        rollServo.write(servoCenterDegrees);
+        pwm.setPWM(pitchServoChannel, 0, servoCenterPulse);
+        pwm.setPWM(rollServoChannel, 0, servoCenterPulse);
     }
 
     void setRgb(bool red, bool green, bool blue)
