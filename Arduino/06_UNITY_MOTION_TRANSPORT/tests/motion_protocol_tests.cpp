@@ -22,19 +22,31 @@ int main()
     assert(std::fabs(packet.rollDegrees + 3.75f) < 0.000001f);
 
     assert(parseMotionPosePacket(
-        "OM1,POSE,8,43,nan,0,0,0",
+        "OM1,POSE,8,43,0.25,70,5,-70",
+        &packet) == MotionParseResult::Ok);
+    assert(parseMotionPosePacket(
+        "OM1,POSE,9,44,-0.25,-70,-5,70",
+        &packet) == MotionParseResult::Ok);
+    assert(parseMotionPosePacket(
+        "OM1,POSE,10,45,nan,0,0,0",
         &packet) == MotionParseResult::NonFinite);
     assert(parseMotionPosePacket(
-        "OM1,POSE,9,44,0.25001,0,0,0",
+        "OM1,POSE,11,46,0.25001,0,0,0",
         &packet) == MotionParseResult::OutOfRange);
     assert(parseMotionPosePacket(
-        "OM1,POSE,10,45,0,10.001,0,0",
+        "OM1,POSE,12,47,0,70.001,0,0",
         &packet) == MotionParseResult::OutOfRange);
     assert(parseMotionPosePacket(
-        "OM1,POSE,11,46,0,0,-5.001,0",
+        "OM1,POSE,13,48,0,-70.001,0,0",
         &packet) == MotionParseResult::OutOfRange);
     assert(parseMotionPosePacket(
-        "OM1,POSE,12,47,0,0,0,-10.001",
+        "OM1,POSE,14,49,0,0,-5.001,0",
+        &packet) == MotionParseResult::OutOfRange);
+    assert(parseMotionPosePacket(
+        "OM1,POSE,15,50,0,0,0,-70.001",
+        &packet) == MotionParseResult::OutOfRange);
+    assert(parseMotionPosePacket(
+        "OM1,POSE,16,51,0,0,0,70.001",
         &packet) == MotionParseResult::OutOfRange);
     assert(parseMotionPosePacket(
         "OM1,POSE,0,48,0,0,0,0",

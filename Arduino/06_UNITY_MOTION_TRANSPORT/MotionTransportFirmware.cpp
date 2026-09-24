@@ -2,6 +2,7 @@
 
 #include "MotionProtocol.h"
 #include "MotionFirmwareState.h"
+#include "MotionHardware.h"
 
 namespace
 {
@@ -30,11 +31,9 @@ namespace
 
 void setup()
 {
+    MotionHardware::begin();
     Serial.begin(115200);
 }
-
-
-
 
 void loop()
 {
@@ -61,6 +60,7 @@ namespace
                 if (inputOverflow)
                 {
                     protocolState.failClosed();
+                    MotionHardware::fault("INPUT OVERFLOW");
                     sendError("OM1,ERR,OVERFLOW");
                 }
                 else
@@ -87,6 +87,7 @@ namespace
         if (strcmp(message, "OM1,HELLO") == 0)
         {
             protocolState.beginSession();
+            MotionHardware::beginSession();
             sendLiteral("OM1,READY");
             return;
         }
@@ -94,6 +95,7 @@ namespace
         if (strcmp(message, "OM1,STOP") == 0)
         {
             protocolState.stop();
+            MotionHardware::stop("STOPPED");
             sendLiteral("OM1,STOPPED");
             return;
         }
@@ -103,6 +105,7 @@ namespace
         if (result != MotionParseResult::Ok)
         {
             protocolState.failClosed();
+            MotionHardware::fault("PROTOCOL ERROR");
             sendParseError(result);
             return;
         }
@@ -110,6 +113,7 @@ namespace
         MotionFirmwareResult acceptance = protocolState.acceptPose(parsed);
         if (acceptance == MotionFirmwareResult::HandshakeRequired)
         {
+            MotionHardware::fault("NEED HANDSHAKE");
             sendError("OM1,ERR,HANDSHAKE");
             return;
         }
@@ -120,11 +124,14 @@ namespace
         }
         if (acceptance != MotionFirmwareResult::Accepted)
         {
+            MotionHardware::fault("SEQUENCE ERROR");
             sendError("OM1,ERR,SEQUENCE");
             return;
         }
 
-        lastValidPoseTime = millis();
+        unsigned long now = millis();
+        lastValidPoseTime = now;
+        MotionHardware::applyPose(parsed, now);
         sendAcknowledgement(parsed.transportSequence);
     }
 
@@ -160,25 +167,23 @@ namespace
         }
     }
 
-bool sendLiteral(const char* message)
-{
-    if (!Serial)
-        return false;
+    bool sendLiteral(const char* message)
+    {
+        if (!Serial)
+            return false;
 
-    size_t expectedBytes = strlen(message) + 2;
-    return Serial.println(message) == expectedBytes;
-}
+        size_t expectedBytes = strlen(message) + 2;
+        return Serial.println(message) == expectedBytes;
+    }
 
+    void sendAcknowledgement(uint32_t transportSequence)
+    {
+        if (!Serial)
+            return;
 
-void sendAcknowledgement(uint32_t transportSequence)
-{
-    if (!Serial)
-        return;
-
-    Serial.print("OM1,ACK,");
-    Serial.println(transportSequence);
-}
-
+        Serial.print("OM1,ACK,");
+        Serial.println(transportSequence);
+    }
 
     void checkCommandWatchdog()
     {
@@ -186,6 +191,7 @@ void sendAcknowledgement(uint32_t transportSequence)
             millis() - lastValidPoseTime > commandTimeoutMs)
         {
             protocolState.stop();
+            MotionHardware::stop("WATCHDOG");
             sendLiteral("OM1,WATCHDOG");
         }
     }

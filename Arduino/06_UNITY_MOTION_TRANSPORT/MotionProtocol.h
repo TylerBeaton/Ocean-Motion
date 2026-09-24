@@ -81,9 +81,9 @@ inline MotionParseResult parseMotionPosePacket(
     }
 
     if (fabsf(heave) > 0.25f ||
-        fabsf(pitch) > 10.0f ||
+        fabsf(pitch) > 70.0f ||
         fabsf(yaw) > 5.0f ||
-        fabsf(roll) > 10.0f)
+        fabsf(roll) > 70.0f)
         return MotionParseResult::OutOfRange;
 
     packet->transportSequence = static_cast<uint32_t>(transport);
