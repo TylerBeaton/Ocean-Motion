@@ -83,7 +83,7 @@ namespace OceanMotion.Subproject06.Editor
             RequireVector(settings, "translationGain", Vector3.one);
             RequireVector(settings, "rotationGain", Vector3.one);
             RequireVector(settings, "translationLimitMeters", new Vector3(0f, 0.25f, 0f));
-            RequireVector(settings, "rotationLimitDegrees", new Vector3(10f, 5f, 10f));
+            RequireVector(settings, "rotationLimitDegrees", new Vector3(70f, 5f, 70f));
             RequireVector(
                 settings,
                 "translationVelocityLimitMetersPerSecond",

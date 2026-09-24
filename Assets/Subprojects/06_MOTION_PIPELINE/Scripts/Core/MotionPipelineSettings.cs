@@ -143,7 +143,7 @@ namespace OceanMotion.Subproject06
             Vector3.one,
             Vector3.one,
             new Vector3(0f, 0.25f, 0f),
-            new Vector3(10f, 5f, 10f),
+            new Vector3(70f, 5f, 70f),
             new Vector3(0f, 0.75f, 0f),
             new Vector3(90f, 45f, 90f),
             new Vector3(0f, 3f, 0f),

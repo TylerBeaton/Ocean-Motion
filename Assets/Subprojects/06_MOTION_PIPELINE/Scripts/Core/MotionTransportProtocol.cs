@@ -12,9 +12,9 @@ namespace OceanMotion.Subproject06
         public const string WatchdogMessage = Version + ",WATCHDOG";
         public const string ErrorPrefix = Version + ",ERR,";
         public const float MaximumHeaveMeters = 0.25f;
-        public const float MaximumPitchDegrees = 10f;
+        public const float MaximumPitchDegrees = 70f;
         public const float MaximumYawDegrees = 5f;
-        public const float MaximumRollDegrees = 10f;
+        public const float MaximumRollDegrees = 70f;
 
         public static bool TryFormatPose(
             MotionPoseCommand command,
