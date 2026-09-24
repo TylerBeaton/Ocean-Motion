@@ -9,7 +9,7 @@ SP05 telemetry → gains → pose limits → velocity limits → acceleration li
 → optional smoothing → bounded pose command → versioned serial packet
 ```
 
-This milestone does **not** select an actuator architecture, solve Stewart-platform inverse kinematics, or drive physical hardware. It now transports the architecture-neutral pose contract to an Arduino receiver for communication validation, but the firmware intentionally contains no actuator objects, output pins, PWM writes, or motor commands.
+This milestone does **not** select the final actuator architecture or solve Stewart-platform inverse kinematics. The Unity pipeline and serial contract remain architecture-neutral. The paired SP06.2 demonstration firmware now drives two unloaded hobby servos from pitch and roll while displaying telemetry on an LCD; this is a bounded integration demo, not the final platform actuator layer.
 
 ## Dependency and reuse status
 
@@ -17,7 +17,7 @@ This milestone does **not** select an actuator architecture, solve Stewart-platf
 - Preserves Subproject 05 unchanged; the SP06 scene references reusable SP05 assets and scripts.
 - `MotionPoseSample`, `MotionPipelineSettings`, `MotionPoseProcessor`, `MotionPoseCommand`, and `MotionLimitFlags` are reusable downstream.
 - `MotionTransportProtocol` and `MotionTransportSession` provide a versioned, architecture-neutral transport boundary reusable by later mechanism-specific stages.
-- Paired receiver firmware is archived at `Arduino/06_UNITY_MOTION_TRANSPORT/06_UNITY_MOTION_TRANSPORT.ino`; its implementation is in the companion `MotionTransportFirmware.cpp` to avoid host-specific Arduino prototype generation.
+- Paired receiver firmware starts at `Arduino/06_UNITY_MOTION_TRANSPORT/06_UNITY_MOTION_TRANSPORT.ino`. `MotionTransportFirmware.cpp` owns the protocol loop and safety state, while `MotionHardware.h/.cpp` own the two-servo PCA9685 mapping, LCD telemetry, and RGB status.
 - The raw/processed pose proxies are display-only diagnostics and are not part of the source boat's physics hierarchy.
 
 ## Motion contract
@@ -32,7 +32,7 @@ This milestone does **not** select an actuator architecture, solve Stewart-platf
 | Setting | Translation | Rotation |
 |---|---:|---:|
 | Gain | `(1, 1, 1)` | `(1, 1, 1)` |
-| Pose limit | `(0, 0.25, 0)` m | `(10, 5, 10)` deg |
+| Pose limit | `(0, 0.25, 0)` m | `(70, 5, 70)` deg |
 | Velocity limit | `(0, 0.75, 0)` m/s | `(90, 45, 90)` deg/s |
 | Acceleration limit | `(0, 3, 0)` m/s² | `(360, 180, 360)` deg/s² |
 | Smoothing time | `0.1 s` | `0.1 s` |
@@ -74,7 +74,7 @@ Runtime Inspector setting changes update the processor configuration without res
 - Errors: firmware reports `OM1,ERR,<reason>` for malformed, non-finite, out-of-range, oversized, pre-handshake, or out-of-order records. Every protocol error latches the receiver safe and requires a fresh handshake.
 - Recovery: a protocol error or transport-sequence rollover closes the pose gate and requires a fresh HELLO/READY exchange. Ardity also clears and gates its queues across reconnect so neither a stale POSE nor stale ACK can cross connection generations.
 
-The firmware independently rejects commands outside the saved SP06 software envelope: heave `±0.25 m`, pitch `±10°`, yaw `±5°`, and roll `±10°`. These remain provisional software-test limits, not approved physical mechanism limits.
+The firmware independently rejects commands outside the saved SP06 software envelope: heave `±0.25 m`, pitch `±70°`, yaw `±5°`, and roll `±70°`. Pitch maps to PCA9685 channel `0` and roll to channel `1`. Their experimental `235…379` pulse envelope is centred at `307`; those endpoints remain calibration candidates rather than approved mechanism limits.
 
 The saved scene contains `SP06 Serial Transport (Hardware Disabled)`. Its `SerialController` is disabled and uses `/dev/cu.usbmodem-SET-ME` so opening the scene cannot accidentally claim a port. Select the actual port and enable that component only during the hardware test.
 
@@ -114,8 +114,9 @@ Automated checks cover:
 - smoothing-disable continuity while the published pose lags limiter state;
 - display mapping and hierarchy separation;
 - invariant packet formatting, exact firmware-envelope validation, realtime source freshness, handshake/reconnect gating, `20 Hz` scheduling, retried STOP/STOPPED recovery, application-level acknowledgement sampling, duplicate/stale ACK rejection, and latest-state queue replacement;
-- host-native firmware parser and receiver-state tests for valid, malformed, non-finite, range, sequence-overflow, exact-duplicate, conflicting-duplicate, and out-of-order cases;
-- UNO R4 WiFi firmware compilation with actuator output APIs absent;
+- host-native firmware parser and receiver-state tests for valid, malformed, non-finite, `±70°` range boundaries, sequence-overflow, exact-duplicate, conflicting-duplicate, and out-of-order cases;
+- host-native hardware-mapping tests for both servo channels, endpoints, centre, midpoint interpolation, clamping, and neutral targets;
+- UNO R4 WiFi firmware compilation with PCA9685, LCD, and RGB hardware output isolated in `MotionHardware.cpp`;
 - saved serial scene references, `115200` baud, disabled-by-default state, placeholder port, and acknowledgement queue depth.
 
 After accounting simplification: `60/60` isolated Unity EditMode tests passed, and the serial Editor check routine completed successfully, including custom-delimiter output, reconnect-buffer reset, component re-enable, and unavailable-listener teardown regressions. Its success marker is not a count of independently reported tests. `git diff --check` passed and SP05 remains unchanged.
@@ -136,6 +137,20 @@ The physical validation used Unity `6000.5.7f1`, one Arduino UNO R4 WiFi at `/de
 | Play-mode teardown | Passed after making Ardity's final disconnect notification tolerant of an already-disabled listener. Play mode exited without `SendMessage OnConnectionEvent has no receiver!`, and `lsof /dev/cu.usbmodem3CDC754A58082` returned no owner. |
 | Saved baseline | Passed. The serial Editor check completed, the scene was restored to its disabled placeholder-port state, and the authoritative Mac working tree was clean. |
 
+### SP06.2 two-servo demonstration status
+
+The working monolithic telemetry demonstration was used as the behavioral reference for the modular firmware. The refactor preserves the tested transport/state classes and moves physical behavior behind `MotionHardware`: PCA9685 setup, pitch channel `0`, roll channel `1`, LCD telemetry, RGB state, centring on startup/HELLO/STOP/watchdog/fault, and pose-to-pulse mapping. The modular source and its host tests compile, but the refactored binary still needs upload and a short physical regression run before it replaces the monolithic sketch as the bench-verified build.
+
+The current pulse calibration is experimental:
+
+| Command | Nominal servo angle | PCA9685 pulse |
+|---:|---:|---:|
+| `-70°` | `20°` | `235` |
+| `0°` | `90°` | `307` |
+| `+70°` | `160°` | `379` |
+
+Pulse counts determine physical travel. Validate endpoints unloaded and one axis at a time; source-level tests and a successful compile do not establish mechanical safety.
+
 ### Apple-silicon command-line toolchain
 
 Arduino's bundled Renesas compiler and `bossac` uploader on this development host are Intel-only. Compatible native compile tools are installed at:
@@ -144,6 +159,8 @@ Arduino's bundled Renesas compiler and `bossac` uploader on this development hos
 - ctags: `$(brew --prefix ctags)/bin`
 
 Use those paths through Arduino CLI build-property overrides. The compile command below has been exercised. A compatible native `bossac` installation was attempted but did not install successfully, so command-line upload is not yet verified; board enumeration and upload remain part of the physical test.
+
+Install `Adafruit PWM Servo Driver Library` and `LiquidCrystal I2C` through Arduino Library Manager before compiling. The Adafruit library also installs `Adafruit BusIO`.
 
 ```bash
 CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
@@ -163,23 +180,21 @@ Manual Play-mode checks completed:
 - raw and processed proxies visualize the expected neutral-relative motion;
 - smoothing defaults off and behaves as measured when temporarily enabled.
 
-## Hardware validation checklist
+## SP06.2 demo checklist
 
-1. Connect only the UNO R4 WiFi by USB; do not connect servos, motor drivers, signal leads, or actuator power.
-2. Stop Unity Play mode and close Arduino Serial Monitor/Plotter and every other serial terminal. Confirm only one program can own the port.
-3. Upload `Arduino/06_UNITY_MOTION_TRANSPORT/06_UNITY_MOTION_TRANSPORT.ino` for **Arduino UNO R4 WiFi**. Start with Arduino IDE after selecting the detected `/dev/cu.usbmodem…` port. If its bundled uploader fails on this host, stop and resolve the uploader compatibility separately; a successful compile is not proof of upload.
-4. With Unity stopped, open a serial terminal at `115200` using either LF or CRLF line endings. Require no unsolicited READY. Send a valid POSE before HELLO and require `OM1,ERR,HANDSHAKE`. Send `OM1,HELLO`; require exactly `OM1,READY`.
-5. Send `OM1,POSE,1,1,0.10000,1.00000,2.00000,3.00000`; require `OM1,ACK,1`. Send the exact packet again and require the same ACK. Send the same transport sequence with a changed pose and require `OM1,ERR,SEQUENCE`; then send a new valid POSE and require `OM1,ERR,HANDSHAKE` until another HELLO/READY completes.
-6. Send separate malformed probes, waiting at least `50 ms` between them: `BAD` → `OM1,ERR,FORMAT`; `OM1,POSE,2,2,nan,0,0,0` → `OM1,ERR,NONFINITE`; `OM1,POSE,2,2,0.25001,0,0,0` → `OM1,ERR,RANGE`.
-7. Send `OM1,HELLO`, then one valid pose. Stop sending for more than `250 ms`; require one `OM1,WATCHDOG`. Send `OM1,STOP`; require `OM1,STOPPED`. Close the terminal before Unity claims the port.
+1. Stop Unity Play mode and close Arduino Serial Monitor/Plotter and every other serial terminal. Only one program may own the serial port.
+2. With actuator power off, confirm pitch is on PCA9685 channel `0`, roll is on channel `1`, the LCD is at `0x27`, and the PCA9685 is at `0x40`.
+3. Keep Arduino `5V` on LCD/PCA9685 logic only. Feed PCA9685 `V+` from the dedicated regulated `5 V / 10 A` supply, bypass the breadboard for servo current, and keep external-supply negative, Arduino ground, PCA9685 ground, and LCD ground common. Never connect external-supply positive to Arduino `5V` or the Arduino-powered breadboard positive rail.
+4. Upload `Arduino/06_UNITY_MOTION_TRANSPORT/06_UNITY_MOTION_TRANSPORT.ino` for **Arduino UNO R4 WiFi**. A successful compile is not proof of upload; wait for `SP06.2 READY` on the LCD and both servos to centre before proceeding.
+5. Test unloaded and mechanically clear. Start with moderate commands, then exercise pitch and roll one axis at a time. Stop immediately for binding, continuous buzzing, chatter, heat, non-increasing motion, supply sag, or an Arduino/LCD reset. Do not treat the `235…379` endpoints as mechanically certified.
+6. With Unity stopped, use a serial terminal at `115200`. Send `OM1,HELLO` and require `OM1,READY`, then send `OM1,POSE,1,1,0,10,0,0` and require `OM1,ACK,1` plus pitch-only motion. Re-handshake and send `OM1,POSE,1,1,0,0,0,10` for roll-only motion. Close the terminal before Unity claims the port.
+7. Send `OM1,STOP` and require `OM1,STOPPED`, red RGB state, a stopped LCD message, and both servos centred. After a fresh HELLO and valid pose, stop sending for more than `250 ms`; require `OM1,WATCHDOG` and the same centred posture. A malformed or out-of-range packet must produce `OM1,ERR,<reason>`, red fault state, centred servos, and a required fresh handshake.
 8. In `SP06_Motion_Pipeline`, select `SP06 Serial Transport (Hardware Disabled)`, replace `/dev/cu.usbmodem-SET-ME` with the current port, and enable only its `SerialController` component.
-9. Enter Play mode. Require `Port Connected` and `Firmware Ready`. During healthy motion, require increasing ACK count and sequence, watchdog trips `0`, and protocol errors `0`. Record available application-level ACK latency samples; they are not a worst-case latency guarantee.
-10. Freeze simulation with `Time.timeScale = 0` while Play mode and serial remain active. Within roughly `0.5 s`, require `OM1,STOPPED` as the last device message and the ACK count to settle. Restore time scale and require fresh source motion to resume acknowledged poses.
-11. While streaming, unplug and reconnect USB. Require the connection/readiness indicators to drop, then a fresh HELLO/READY before pose acknowledgements resume; require no protocol error or stale ACK attribution. Also disable/re-enable `MotionSerialTransport` with the port connected and require a new handshake. If macOS assigns a different device name, exit Play mode, disable `SerialController`, change the port, then re-enable it so the worker is recreated with the new name.
-12. Exit and re-enter Play mode to reset cumulative diagnostics, then run for at least five minutes while moving the simulated boat. Require continued ACK progress, no unexplained stalls or disconnects, zero unexpected watchdog trips, and zero protocol errors. Record duration, ACK totals, available application-level latency samples, and observed issues. This is a functional endurance check, not proof of zero packet loss or bounded worst-case latency; those require separate timestamped capture if needed later.
+9. Enter Play mode. Require `Port Connected`, `Firmware Ready`, increasing ACK count/sequence, green RGB state during valid poses, live LCD telemetry, pitch motion on channel `0`, roll motion on channel `1`, watchdog trips `0`, and protocol errors `0`.
+10. For today's demo, keep the rig unloaded and the simulated motion moderate. End by exiting Play mode or disabling transport and confirm the STOP path centres both servos before removing actuator power.
 
-Do not open Arduino Serial Monitor while Unity owns the port. Before any future actuator firmware is introduced, restore the scene's disabled serial default and define mechanism-specific travel, fault posture, power, and emergency-stop limits.
+Do not open Arduino Serial Monitor while Unity owns the port. The modular hardware boundary is ready to gain additional channels later, but this checkpoint intentionally implements only pitch, roll, LCD, and RGB behavior.
 
 ## Next integration boundary
 
-SP06.1's Unity-to-UNO transport gate is accepted. Preserve its simulation, conditioning, transport, firmware, and physical-output boundaries when starting the next milestone. Mechanism-specific inverse kinematics or actuator commands require their own limits, calibration, fault posture, power plan, and emergency-stop gate; physical motion remains explicitly out of scope for this checkpoint.
+SP06.1's transport gate remains the reusable foundation, and SP06.2 adds a narrow two-servo hardware adapter without coupling PCA9685/LCD/RGB behavior to packet parsing. Additional servos should be added through `MotionHardware` configuration and tests, not directly in `MotionTransportFirmware.cpp`. Mechanism-specific inverse kinematics still requires its own limits, calibration, fault posture, power plan, and emergency-stop gate after the actuator architecture is selected.
