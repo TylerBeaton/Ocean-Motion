@@ -139,17 +139,19 @@ The physical validation used Unity `6000.5.7f1`, one Arduino UNO R4 WiFi at `/de
 
 ### SP06.2 two-servo demonstration status
 
-The working monolithic telemetry demonstration was used as the behavioral reference for the modular firmware. The refactor preserves the tested transport/state classes and moves physical behavior behind `MotionHardware`: PCA9685 setup, pitch channel `0`, roll channel `1`, LCD telemetry, RGB state, centring on startup/HELLO/STOP/watchdog/fault, and pose-to-pulse mapping. The modular source and its host tests compile, but the refactored binary still needs upload and a short physical regression run before it replaces the monolithic sketch as the bench-verified build.
+The working monolithic telemetry demonstration was used as the behavioral reference for the modular firmware. The refactor preserves the tested transport/state classes and moves physical behavior behind `MotionHardware`: PCA9685 setup, pitch channel `0`, roll channel `1`, LCD telemetry, RGB state, centring on startup/HELLO/STOP/watchdog/fault, and pose-to-pulse mapping. The user uploaded the modular sketch from the current project worktree and observed LCD, RGB, and servo operation with Unity; a timed run, fault/recovery recording, and full-travel clearance checks remain open.
 
-The current pulse calibration is experimental:
+The current pulse calibration is experimental. The original untrimmed mapping was `235 / 307 / 379`; with the fixture-specific neutral trims, actual outputs are:
 
-| Command | Nominal servo angle | PCA9685 pulse |
+| Command | Pitch channel 0 pulse | Roll channel 1 pulse |
 |---:|---:|---:|
-| `-70°` | `20°` | `235` |
-| `0°` | `90°` | `307` |
-| `+70°` | `160°` | `379` |
+| `-70°` | `243` | `235` |
+| `0°` | `315` | `299` |
+| `+70°` | `379` | `371` |
 
 Pulse counts determine physical travel. Validate endpoints unloaded and one axis at a time; source-level tests and a successful compile do not establish mechanical safety.
+
+Channel `0` (pitch) and channel `1` (roll) have independent signed neutral-pulse trims in `MotionHardware.h`. The user adjusted the unloaded horns to an apparently level neutral with pitch `+8` counts and roll `-8` counts. These fixture-specific values affect only servo output, not the processed telemetry or LCD values. Final pulses remain clamped within `235…379`; the shifted centres change available travel on each side. Neutral appearance was checked by the user, but full-travel clearance and symmetry have not been established by the build or the neutral check.
 
 ### Apple-silicon command-line toolchain
 

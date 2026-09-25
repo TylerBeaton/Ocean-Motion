@@ -14,6 +14,7 @@ struct MotionServoCalibration
     uint16_t minimumPulse;
     uint16_t centerPulse;
     uint16_t maximumPulse;
+    int16_t neutralTrimPulse;
 };
 
 struct MotionServoTarget
@@ -39,7 +40,8 @@ inline MotionServoCalibration pitchCalibration()
         70.0f,
         235u,
         307u,
-        379u};
+        379u,
+        8}; // Neutral trim for the unloaded pitch display servo.
     return calibration;
 }
 
@@ -52,7 +54,8 @@ inline MotionServoCalibration rollCalibration()
         70.0f,
         235u,
         307u,
-        379u};
+        379u,
+        -8}; // Neutral trim for the unloaded roll display servo.
     return calibration;
 }
 
@@ -95,7 +98,13 @@ inline uint16_t pulseForCommand(
                 calibration.maximumPulse - calibration.centerPulse);
     }
 
-    return static_cast<uint16_t>(pulse + 0.5f);
+    int32_t trimmed = static_cast<int32_t>(pulse + 0.5f) +
+        calibration.neutralTrimPulse;
+    if (trimmed < calibration.minimumPulse)
+        trimmed = calibration.minimumPulse;
+    if (trimmed > calibration.maximumPulse)
+        trimmed = calibration.maximumPulse;
+    return static_cast<uint16_t>(trimmed);
 }
 
 inline MotionServoTarget targetForCommand(
