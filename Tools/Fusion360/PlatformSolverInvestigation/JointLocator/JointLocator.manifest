@@ -1,0 +1,9 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "script",
+  "author": "Ocean Motion",
+  "description": "Read-only named joint locator with optional explicit UI selection; no CAD edits or saves.",
+  "version": "1.0.0",
+  "runOnStartup": false,
+  "supportedOS": "windows|mac"
+}

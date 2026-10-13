@@ -1,0 +1,9 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "script",
+  "author": "Ocean Motion",
+  "description": "Disposable-copy diagnostic: reconnect platform constraints for bounded heave; not validated playback.",
+  "version": "0.1.0",
+  "runOnStartup": false,
+  "supportedOS": "windows|mac"
+}

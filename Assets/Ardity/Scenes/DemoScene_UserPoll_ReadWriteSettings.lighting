@@ -8,7 +8,7 @@ LightingSettings:
   m_PrefabAsset: {fileID: 0}
   m_Name: DemoScene_UserPoll_ReadWriteSettings
   serializedVersion: 10
-  m_EnableBakedLightmaps: 0
+  m_EnableBakedLightmaps: 1
   m_EnableRealtimeLightmaps: 0
   m_RealtimeEnvironmentLighting: 1
   m_BounceScale: 1
@@ -28,7 +28,7 @@ LightingSettings:
   m_XAtlasBruteForce: 0
   m_XAtlasBlockAlign: 0
   m_XAtlasRepackUnderutilizedLightmaps: 1
-  m_AO: 0
+  m_AO: 1
   m_AOMaxDistance: 1
   m_CompAOExponent: 0
   m_CompAOExponentDirect: 0

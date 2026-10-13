@@ -1,0 +1,11 @@
+# PoseFeedbackPlayback checkpoint
+
+Implemented candidate entry and stdlib math/controller in this folder only. No commits, no native Fusion run, no CAD saves, no hardware output. Initial live branch was feature/unity-fusion-telemetry, upstream count 0/0; unrelated tracked/untracked work preserved.
+
+Current host validation: `python3 -m unittest discover -s tests -v` passed **15 tests** (final run 0.810 s); `python3 -m py_compile PoseFeedbackPlayback.py controller.py core.py` succeeded. Manifest parses as a Fusion script. AST safety scan found no assignments to transform/transform2/isGrounded/isSuppressed/isLocked. `git diff --check` succeeded; unrelated tracked/untracked work remains present.
+
+RED runs recorded missing solver/mapping/controller/entry behavior before implementation. Additional red regressions caught tilted-neutral world-heading drift, a native restoration exception not marked unrestorable, and missing per-probe error logging. These are fixed and green. Actual 278-row source CSV parsed and every target envelope checked. Entire 278-row control replay on an explicitly cross-coupled **software plant** completed; maximum residuals were 0.07537260440489234 mm and 0.03983077266131456 degrees. Complete entry PREVIEW workflow (31 frames, proof, return, CSV, final restoration) also executes through a fake software API; no fake/native-looking measurement reports were generated. Neither result is Autodesk/mechanism evidence.
+
+Architecture: full translation mm + world orientation rotation-vector degrees, six-by-six finite-difference model regenerated per correction; undamped rank gate before DLS; .25 degree probes; all-occurrence restoration gate before next probe; 1 degree update, 10 degree total, 5 mm / 3 degree plate envelope, four corrections/frame; six ordinary contextual revolutes only. Every individual setter monitored. No graph edits or unknown root/as-built getter calls.
+
+Outstanding at this checkpoint: finalize manifest/README and extra safety/integration fake tests; native Fusion execution pending. Potential Fusion API context/solver behavior must be tested in explicit disposable copy; host fake tests are not native evidence. Unknown Rigid 4 / Rigid 10 endpoints and contextual Rigid 7 suppression are explicitly unresolved. Sequential drives are not atomic or guaranteed real-time.

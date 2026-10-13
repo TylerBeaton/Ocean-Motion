@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace OceanMotion.Subproject05
@@ -5,6 +6,8 @@ namespace OceanMotion.Subproject05
     [RequireComponent(typeof(Rigidbody))]
     public class BoatMotionTelemetry : MonoBehaviour
     {
+        public event Action NeutralCalibrated;
+
         [Header("Calibration")]
         [SerializeField] private bool isCalibrated;
         [SerializeField] private Vector3 neutralPosition;
@@ -77,6 +80,7 @@ namespace OceanMotion.Subproject05
             sequence = 0;
             simulationTime = Time.time;
             isCalibrated = true;
+            NeutralCalibrated?.Invoke();
         }
     }
 }

@@ -45,6 +45,8 @@
 # OS and editor-local files
 .DS_Store
 .vscode/
+# Local script environment paths and credentials
+.env
 
 # Visual Studio cache directory
 .vs/
