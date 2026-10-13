@@ -1,0 +1,2 @@
+joint_name,measurement,unit,minimum,maximum,travel
+Revolute 1,rotationValue,rad,0.002551169701588148,6.266680541811121,6.264129372109533

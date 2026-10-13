@@ -1,0 +1,9 @@
+{
+  "autodeskProduct": "Fusion360",
+  "type": "script",
+  "author": "Ocean Motion",
+  "description": {"": "Disposable-copy Unity CSV preview using bounded numerical six-DOF ordinary revolute pose feedback. Native validation pending."},
+  "version": "0.1.0",
+  "runOnStartup": false,
+  "supportedOS": "windows|mac"
+}

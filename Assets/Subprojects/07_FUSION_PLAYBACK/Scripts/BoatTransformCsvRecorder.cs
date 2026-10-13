@@ -11,6 +11,7 @@ namespace OceanMotion.FusionPlayback
     public sealed class BoatTransformCsvRecorder : MonoBehaviour
     {
         private const int SchemaVersion = 1;
+        private const string DefaultOutputDirectory = "Tools/Fusion360/UnityBoatTelemetryPlayback/recordings";
 
         [Header("Source")]
         [SerializeField] private Transform boatTransform;
@@ -21,6 +22,8 @@ namespace OceanMotion.FusionPlayback
         [SerializeField] private bool calibrateOnStart = true;
         [SerializeField] private bool beginRecordingOnStart;
         [SerializeField] private string fileNamePrefix = "boat-telemetry";
+        [Tooltip("Absolute path, or a path relative to the Unity project root in the Editor.")]
+        [SerializeField] private string outputDirectory = DefaultOutputDirectory;
 
         private Vector3 neutralWorldPosition;
         private Quaternion neutralWorldRotation = Quaternion.identity;
@@ -92,7 +95,18 @@ namespace OceanMotion.FusionPlayback
 
             string safePrefix = SanitizeFileName(fileNamePrefix);
             string fileName = $"{safePrefix}-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
-            LastOutputPath = Path.Combine(Application.persistentDataPath, fileName);
+            string directory = string.IsNullOrWhiteSpace(outputDirectory)
+                ? DefaultOutputDirectory : outputDirectory.Trim();
+            if (!Path.IsPathRooted(directory))
+            {
+#if UNITY_EDITOR
+                directory = Path.Combine(Path.GetDirectoryName(Application.dataPath), directory);
+#else
+                directory = Path.Combine(Application.persistentDataPath, directory);
+#endif
+            }
+            Directory.CreateDirectory(directory);
+            LastOutputPath = Path.Combine(directory, fileName);
             writer = new StreamWriter(LastOutputPath, false, new UTF8Encoding(false));
             writer.WriteLine("schema_version,sequence,time_seconds,pos_x_m,pos_y_m,pos_z_m,rot_x,rot_y,rot_z,rot_w");
 

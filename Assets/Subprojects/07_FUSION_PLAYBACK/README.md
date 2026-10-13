@@ -6,9 +6,9 @@ This is an offline visualization bridge, not physical platform control. `BoatTra
 
 1. Add `BoatTransformCsvRecorder` to the boat or a manager object.
 2. Assign the boat transform (it defaults to the component's own transform).
-3. Leave **Calibrate On Start** enabled, or invoke **Calibrate Neutral** from the component context menu while the boat is at rest.
-4. Start Play Mode and invoke **Start Recording** from the component context menu. Invoke **Stop Recording** when the capture is complete.
-5. Copy the path printed in the Console. Files are written under `Application.persistentDataPath`.
+3. For a post-settle capture, disable **Begin Recording On Start** and invoke **Calibrate Neutral** from the component context menu while the boat is at rest.
+4. In Play Mode, click **Start Recording** in the component Inspector; click **Stop Recording** when the capture is complete.
+5. Set **Output Directory** in the Inspector if needed. The default is `Tools/Fusion360/UnityBoatTelemetryPlayback/recordings` relative to the Unity project root. Absolute paths are also accepted; relative paths in a built player use `Application.persistentDataPath`. The Console prints the full saved CSV path.
 
 The CSV stores neutral-relative position in metres and neutral-relative orientation as a quaternion. It avoids wrapped Euler angles and keeps quaternion signs continuous.
 

@@ -1,0 +1,19 @@
+test_multiple_first_neutral_heave_frames_include_last (test_core.CsvTests) ... ok
+test_malformed_and_unsafe_inputs_rejected (test_core.RotationAndSafetyTests) ... ok
+test_relative_quaternion_mapping_and_target (test_core.RotationAndSafetyTests) ... ok
+test_adapter_real_reconnect_calls_measures_bodies_and_restores (test_entry.AdapterTests) ... ok
+test_run_cancellation_never_mutates (test_entry.AdapterTests) ... ok
+test_bad_base_duplicate_attachment_and_locked_servo_fail (test_entry.EntryTests) ... ok
+test_enabled_limits_finite_raw_excursion (test_entry.EntryTests) ... ok
+test_full_pose_base_and_body_gates (test_entry.EntryTests) ... ok
+test_only_six_verified_attachments_unknowns_not_mutated (test_entry.EntryTests) ... ok
+test_failed_proof_or_visual_stops_csv_and_restores (test_session.SessionTests) ... ok
+test_failed_restoration_flags_overrides_close_pose (test_session.SessionTests) ... ok
+test_flag_failure_stops_all_further_mutation (test_session.SessionTests) ... ok
+test_proof_visual_gate_multiple_csv_then_restore (test_session.SessionTests) ... ok
+test_residual_never_claims_success (test_session.SessionTests) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.026s
+
+OK

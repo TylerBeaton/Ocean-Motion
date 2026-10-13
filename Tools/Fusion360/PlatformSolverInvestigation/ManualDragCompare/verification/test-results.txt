@@ -1,0 +1,16 @@
+LOCAL STAND-IN TESTS ONLY — NOT NATIVE FUSION SOLVER VALIDATION
+
+test_plate_only_is_not_servo_articulation (test_compare.ComparisonTests) ... ok
+test_real_relative_motion_and_angles (test_compare.ComparisonTests) ... ok
+test_rejects_incomplete_nonfinite_and_mismatched_pairs (test_compare.ComparisonTests) ... ok
+test_start_returns_then_finish_exports_without_model_writes (test_entry.EntryTests) ... ok
+test_angle_error_explicit_and_unrelated_asbuilt_never_read (test_recorder.CaptureTests) ... ok
+test_capture_root_context_and_missing_body_errors (test_recorder.CaptureTests) ... ok
+test_same_path_replacement_is_not_original_occurrence (test_recorder.CaptureTests) ... ok
+test_live_document_not_name_or_creation_id (test_recorder.RecorderTests) ... ok
+test_report_roundtrip_and_nonfinite_rejection (test_recorder.RecorderTests) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.012s
+
+OK

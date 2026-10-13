@@ -1,6 +1,7 @@
 """Fusion 360 script: play Unity boat telemetry on a component occurrence."""
 
 import csv
+import math
 import os
 import sys
 import time
@@ -17,7 +18,9 @@ from telemetry_math import fusion_delta_from_unity_pose, parse_telemetry_rows
 
 # Configuration. An empty occurrence name prompts when the script runs.
 TARGET_OCCURRENCE_NAME = ""
-TRANSLATION_SCALE = 1.0
+# Visual fit for this 0.772 m-heave capture and a roughly 32 mm CAD heave range.
+# Recheck against each recording; this does not enforce travel limits.
+TRANSLATION_SCALE = 0.04
 PLAYBACK_SPEED = 1.0
 FUSION_CENTIMETERS_PER_UNITY_METER = 100.0
 LOOP_PLAYBACK = False
@@ -55,8 +58,7 @@ def _compose_from_neutral(neutral, delta_rotation, delta_translation):
 
 def _capture_joint_ranges(root, ranges):
     joints = root.allJoints
-    for index in range(joints.count):
-        joint = joints.item(index)
+    for joint in joints:
         motion = joint.jointMotion
         if not motion:
             continue
@@ -93,6 +95,30 @@ def _choose_csv(ui):
     return dialog.filename
 
 
+def _ask_calm_y(ui):
+    value, cancelled = ui.inputBox(
+        "CSV calm Unity Y in metres (subtracted before scaling; use 0 if already zero at calm).",
+        "Calm Waterline Offset",
+        "0.352202",
+    )
+    if cancelled:
+        return None
+    try:
+        calm_y_m = float(value)
+    except ValueError as exc:
+        raise ValueError("Calm Unity Y must be a number in metres") from exc
+    if not math.isfinite(calm_y_m):
+        raise ValueError("Calm Unity Y must be finite")
+    return calm_y_m
+
+def _map_frame_pose(frame, calm_y_m):
+    # Offset before mapping; Fusion may retain an older cached telemetry_math module.
+    x, y, z = frame["position_m"]
+    return fusion_delta_from_unity_pose(
+        (x, y - calm_y_m, z), frame["quaternion"],
+        FUSION_CENTIMETERS_PER_UNITY_METER, TRANSLATION_SCALE,
+    )
+
 def run(_context):
     app = adsk.core.Application.get()
     ui = app.userInterface
@@ -110,6 +136,9 @@ def run(_context):
             return
         with open(input_path, "r", newline="", encoding="utf-8-sig") as source:
             frames = parse_telemetry_rows(source)
+        calm_y_m = _ask_calm_y(ui)
+        if calm_y_m is None:
+            return
 
         occurrence_name = TARGET_OCCURRENCE_NAME
         if not occurrence_name:
@@ -140,12 +169,7 @@ def run(_context):
                     time.sleep(delay)
                 previous_time = frame["time_seconds"]
 
-                rotation, translation = fusion_delta_from_unity_pose(
-                    frame["position_m"],
-                    frame["quaternion"],
-                    FUSION_CENTIMETERS_PER_UNITY_METER,
-                    TRANSLATION_SCALE,
-                )
+                rotation, translation = _map_frame_pose(frame, calm_y_m)
                 occurrence.transform2 = _compose_from_neutral(neutral, rotation, translation)
                 adsk.doEvents()
                 app.activeViewport.refresh()
