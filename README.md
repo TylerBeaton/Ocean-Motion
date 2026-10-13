@@ -75,6 +75,8 @@ A checked milestone has been completed. Detailed tasks, test results, design not
 
 Ocean Motion uses **Unity 6.5 with the Universal Render Pipeline**.
 
+The Subproject 07 Stewart-platform demo uses the third-party **Final IK** Unity Asset Store package. It is not included in this repository; install it separately in Unity before opening or testing that scene and prefab. This repository documents milestone experiments as a project journal and portfolio, not a ready-to-use product or a fully portable project setup. The IK dependency may be replaced with Unity-native tooling in a later experiment.
+
 Numbered experiments are kept under `Assets/Subprojects`. Each implemented subproject contains its own scene, scripts, supporting assets, and local documentation where practical.
 
 Completed experiments are preserved rather than overwritten. This makes it possible to revisit each working milestone while later parts of the project continue to evolve.
