@@ -41,8 +41,11 @@ A checked milestone has been completed. Detailed tasks, test results, design not
 - [x] **05 — Put the boat on water**
   Create a stable boat-and-water simulation that produces useful pitch, roll, heave, and diagnostic yaw motion.
 
-- [ ] **06 — Build the motion pipeline**
+- [x] **06a — Build the motion pipeline**
   Turn raw boat movement into scaled, filtered, and bounded motion commands.
+
+- [x] **06b - Design the Stewart Platform with CAD software**
+  Use CAD software to design the prototype giving attention to part measurements and positioning of parts and simulate it.
 
 - [ ] **07 — First mechanical linkage**
   Test one representative actuator, driver, joint, and linkage under a realistic mechanical load.
