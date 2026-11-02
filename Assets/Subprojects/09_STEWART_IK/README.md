@@ -1,9 +1,14 @@
-# SP09 — offline rotary Stewart IK foundation
+# SP09 — rotary Stewart IK and Unity visual preview
 
 This stage now has a runnable analytical solver for the current rotary prototype. It produces six signed horn-angle solutions and reconstructed linkage points for a requested pose. It has **no PWM conversion, serial transport or hardware output**. Earlier Arduino experiments, SP07 scenes and source measurement files remain preserved. This experiment does not freeze the project's final actuator architecture.
 
 ## Start here
 
+- In Unity, choose **Ocean Motion → SP09 → Open IK Preview**, then press **Play**. Start with **Heave +1 mm**, **Neutral**, then **Pitch +1°**. The six coloured linkages solve individually for the requested top-plate pose.
+- [Preview scene](Scenes/SP09_IkPreview.unity) and [rendered neutral geometry](Reports/unity-preview-neutral.png). The scene is independent of the archived milestones; geometry is generated on entering Play mode.
+- The Game-view panel has sway/heave/surge sliders (±10 mm) and pitch/yaw/roll sliders (±5°). These are demonstration ranges, not verified mechanical travel limits. **Test rejection: +1 m heave** deliberately rejects a pose, hides solved rods/horns and shows a red desired plate. **Neutral** recovers. Nothing is clipped into an apparently valid result.
+- For Scene handles, enable **Use Target transform**, select the child **Target - neutral-relative pose**, and move/rotate it during Play mode. Keep its scale at one. The contract reads a neutral-relative quaternion; the slider Euler angles are only input controls. Use a sufficiently large Game view (roughly 1200×800 or larger) for the full panel.
+- Hardware output remains absent. This is the visual geometry gate before connecting the boat-motion source or Arduino.
 - [Numerical check report](Reports/offline-check-report.md) and [full JSON diagnostics](Reports/offline-check-report.json).
 - [Editable offline geometry](Measurements/offline-geometry.json).
 - [Solver](Offline/stewart_ik.py), [CLI](Offline/run_ik.py), and [tests](Offline/tests/test_ik.py).
@@ -63,9 +68,16 @@ The module supports a nonidentity neutral control rotation and arbitrary shaft a
 - 15 diagnostic fixtures passed: neutral,±1 mm translations and±1° rotations on all six Unity channels, a combined pose, and rejection of1 m heave.
 - 181-sample small tilt/heave path passed; maximum adjacent angle change0.165692°, rod numerical closure error at most5.68e-14 mm. This is floating-point consistency, not physical accuracy.
 
-This completes the first offline numerical foundation. Next is review/visualization of the geometry and reference directions. Actual physical horn-side offsets, angular calibration/limits, joint/collision checks, full-platform Jacobian singularity/workspace checks, supply/load/reset behavior and small static physical poses remain separate proof gates. No live motion, measured height or physical safety envelope is established by these tests.
+The Unity C# core is separate from its preview/JSON adapter and contains no Unity engine dependencies. It uses the same configured geometry and pinned branch policy as Python. `PreviewChecks.Run` independently compares all 15 Python reference fixtures (including an unreachable pose), checks 181 continuous Unity quaternion poses, reflected rotation/translation axes, invalid inputs and whole-pose continuity rejection. Geometry SHA-256 must match the fixture snapshot. Regenerate fixtures after an intentional geometry edit with `python3 build_unity_fixtures.py`; review the updated Python results before running Unity checks.
 
-Project baseline remains Unity6000.5.7f1 /URP17.5.0. Existing successful script-compilation log evidence was inspected; no C# runtime components, scenes, packages or project settings were changed. A fresh archived-scene compile is still required before adding the next Unity runtime/scene integration. Hardware remeasurement remains deferred as the user requested.
+Validation on Unity6000.5.7f1 /URP17.5.0:
+
+- Fresh project compilation and archived SP07 scene load passed before adding runtime integration: 13 roots, no missing scripts ([baseline](Reports/unity-baseline-check.json)).
+- C# vs Python fixtures passed, maximum angular difference 3.82e-14°; all 181 continuity samples passed ([numerical report](Reports/unity-preview-checks.json)). These are numerical tolerances, not physical accuracy.
+- Actual Play mode passed neutral, +1 mm heave, +1° pitch, unreachable-pose rejection without stale linkages, neutral recovery, Scene target input and invariance under moving/rotating the preview root ([runtime report](Reports/unity-playmode-check.json)). Neutral geometry was rendered and visually inspected.
+- No packages, project settings, archived scenes or hardware sketches were changed. Play-mode checks are an Editor batch entry point, not a runtime feature. Menu **Ocean Motion → SP09 → Run numerical checks** reruns the mathematical comparison; `PreviewPlayModeCheck.Run` is a batch-only entry point that exits the Editor on completion.
+
+The user reviewed the Unity preview on 2026-11-02 and confirmed the layout and movement looked correct. Next: connect the existing motion-processing output to this visual target through a neutral-relative pose contract. Actual physical horn-side offsets, angular calibration/limits, joint/collision checks, full-platform Jacobian singularity/workspace checks, supply/load/reset behavior and small static physical poses remain separate proof gates before physical output. No measured height or physical safety envelope is established by these tests. Hardware remeasurement remains deferred as requested.
 
 ## Sources and provenance
 
