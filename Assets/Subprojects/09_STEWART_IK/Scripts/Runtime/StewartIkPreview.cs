@@ -9,11 +9,16 @@ namespace OceanMotion.Subproject09.Preview
     {
         public TextAsset geometry;
         public Transform target;
+        public Camera viewCamera;
         public bool useSceneTarget;
         public Vector3 translationMm;
         public Vector3 rotationDegrees;
         public IkResult CurrentResult { get; private set; }
         public string CurrentError { get; private set; }
+        public bool ExternalControl { get; private set; }
+        public string ExternalStatus { get; private set; }
+        public Action PauseExternal, ResumeExternal, DrawExternalControls;
+        private bool externalValid;
         private PreviewGeometry data;
         private RotaryStewartModel model;
         private GameObject visualRoot;
@@ -54,9 +59,27 @@ namespace OceanMotion.Subproject09.Preview
         }
         public void ShowUnreachable() { SetPose(new Vector3(0,1000,0),Vector3.zero); unreachableDemo=true; }
 
+        // General pose boundary: no reference to boat physics, processing, or transport.
+        public void SetExternalPose(Vector3 positionMeters,Quaternion rotation,string status)
+        {
+            ExternalControl=true; externalValid=true; ExternalStatus=status;
+            translationMm=positionMeters*1000; useSceneTarget=true;
+            if (data==null || !target) return;
+            target.localPosition=PreviewGeometry.ToUnity(model.NeutralPositionMm)+data.NeutralUnityRotation*positionMeters;
+            target.localRotation=data.NeutralUnityRotation*rotation;
+            EvaluateNow();
+        }
+        public void RejectExternalPose(string status)
+        {
+            ExternalControl=true; externalValid=false; ExternalStatus=status;
+            CurrentResult=null; CurrentError=status; previous=null;
+            SetSolvedVisible(false); if (plate) plate.enabled=false;
+        }
+
         public void EvaluateNow()
         {
             if (model==null || !target) return;
+            if (ExternalControl && !externalValid) return;
             try
             {
                 Quaternion neutral=data.NeutralUnityRotation;
@@ -102,11 +125,14 @@ namespace OceanMotion.Subproject09.Preview
                 label.transform.localPosition=PreviewGeometry.ToUnity(leg.ShaftPointMm)+Vector3.up*.012f;
                 var text=label.AddComponent<TextMesh>(); text.text=i.ToString(); text.fontSize=48;
                 text.characterSize=.003f; text.anchor=TextAnchor.MiddleCenter; text.color=Colours[i];
-                if (Camera.main) label.transform.rotation=Camera.main.transform.rotation;
+                Camera viewer=viewCamera ? viewCamera : Camera.main;
+                if (viewer) label.transform.rotation=viewer.transform.rotation;
             }
             plate=Line("Desired top outline",Color.white,.002f,7);
             var baseLine=Line("Base outline",new Color(.25f,.35f,.42f),.0015f,7);
             for (int i=0;i<=6;i++) baseLine.SetPosition(i,PreviewGeometry.ToUnity(model.Legs[i%6].ShaftPointMm));
+            foreach (Transform child in visualRoot.GetComponentsInChildren<Transform>(true))
+                child.gameObject.layer=gameObject.layer;
         }
         private LineRenderer Line(string name,Color colour,float width,int count)
         {
@@ -165,22 +191,36 @@ namespace OceanMotion.Subproject09.Preview
             GUILayout.Label("Visual IK preview • hardware output OFF");
             GUILayout.Label("Provisional geometry. Horn offsets and pulse/angle calibration remain unverified.");
             GUILayout.Space(8);
-            if (GUILayout.Button("Neutral")) ResetNeutral();
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Heave +1 mm")) SetPose(new Vector3(0,1,0),Vector3.zero);
-            if (GUILayout.Button("Pitch +1°")) SetPose(Vector3.zero,new Vector3(1,0,0));
-            GUILayout.EndHorizontal();
-            useSceneTarget=GUILayout.Toggle(useSceneTarget,"Use Target transform (Scene move/rotate handles)");
-            bool controls=GUI.enabled; GUI.enabled=!useSceneTarget && !unreachableDemo;
-            translationMm.x=Slider("Sway X",translationMm.x,10,"mm");
-            translationMm.y=Slider("Heave Y",translationMm.y,10,"mm");
-            translationMm.z=Slider("Surge Z",translationMm.z,10,"mm");
-            rotationDegrees.x=Slider("Pitch X",rotationDegrees.x,5,"°");
-            rotationDegrees.y=Slider("Yaw Y",rotationDegrees.y,5,"°");
-            rotationDegrees.z=Slider("Roll Z",rotationDegrees.z,5,"°");
-            GUI.enabled=controls;
-            GUILayout.Space(6);
-            if (GUILayout.Button("Test rejection: +1 m heave")) ShowUnreachable();
+            if (ExternalControl)
+            {
+                GUILayout.Label(ExternalStatus ?? "Waiting for processed motion");
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Pause / Neutral")) PauseExternal?.Invoke();
+                if (GUILayout.Button("Resume boat")) ResumeExternal?.Invoke();
+                GUILayout.EndHorizontal();
+                DrawExternalControls?.Invoke();
+                GUILayout.Label("Source boat (left) → visual IK (right)");
+                GUILayout.Label("Target offset mm: "+translationMm.ToString("F2"));
+            }
+            else
+            {
+                if (GUILayout.Button("Neutral")) ResetNeutral();
+                GUILayout.BeginHorizontal();
+                if (GUILayout.Button("Heave +1 mm")) SetPose(new Vector3(0,1,0),Vector3.zero);
+                if (GUILayout.Button("Pitch +1°")) SetPose(Vector3.zero,new Vector3(1,0,0));
+                GUILayout.EndHorizontal();
+                useSceneTarget=GUILayout.Toggle(useSceneTarget,"Use Target transform (Scene move/rotate handles)");
+                bool controls=GUI.enabled; GUI.enabled=!useSceneTarget && !unreachableDemo;
+                translationMm.x=Slider("Sway X",translationMm.x,10,"mm");
+                translationMm.y=Slider("Heave Y",translationMm.y,10,"mm");
+                translationMm.z=Slider("Surge Z",translationMm.z,10,"mm");
+                rotationDegrees.x=Slider("Pitch X",rotationDegrees.x,5,"°");
+                rotationDegrees.y=Slider("Yaw Y",rotationDegrees.y,5,"°");
+                rotationDegrees.z=Slider("Roll Z",rotationDegrees.z,5,"°");
+                GUI.enabled=controls;
+                GUILayout.Space(6);
+                if (GUILayout.Button("Test rejection: +1 m heave")) ShowUnreachable();
+            }
             GUILayout.Space(8);
             bool valid=CurrentResult!=null && CurrentResult.KinematicSolutionFound;
             GUILayout.Label(valid ? "SOLUTION FOUND (mathematical only)" : "POSE REJECTED",new GUIStyle(GUI.skin.label){fontStyle=FontStyle.Bold,normal={textColor=valid ? Color.green : Color.red}});

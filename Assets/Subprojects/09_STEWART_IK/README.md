@@ -4,6 +4,7 @@ This stage now has a runnable analytical solver for the current rotary prototype
 
 ## Start here
 
+- For processed boat motion, choose **Ocean Motion → SP09 → Open Boat Motion IK**, then **Play**. Let the boat settle in **Calm**, click **Calibrate boat neutral**, then select **Bow**, **Side** or **Crossed**. Boat motion appears on the left and the solved platform on the right. **Pause / Neutral** holds the visual target at neutral while the boat keeps simulating; **Resume boat** reconnects the processed pose.
 - In Unity, choose **Ocean Motion → SP09 → Open IK Preview**, then press **Play**. Start with **Heave +1 mm**, **Neutral**, then **Pitch +1°**. The six coloured linkages solve individually for the requested top-plate pose.
 - [Preview scene](Scenes/SP09_IkPreview.unity) and [rendered neutral geometry](Reports/unity-preview-neutral.png). The scene is independent of the archived milestones; geometry is generated on entering Play mode.
 - The Game-view panel has sway/heave/surge sliders (±10 mm) and pitch/yaw/roll sliders (±5°). These are demonstration ranges, not verified mechanical travel limits. **Test rejection: +1 m heave** deliberately rejects a pose, hides solved rods/horns and shows a red desired plate. **Neutral** recovers. Nothing is clipped into an apparently valid result.
@@ -25,6 +26,22 @@ python3 -m unittest discover -s tests -v
 ```
 
 Python3.9+ standard library only. Default is neutral; Fusion translation arguments are neutral-relative MILLIMETRES and Fusion rotation uses quaternion x,y,z,w. The Unity JSON example instead contains neutral-relative `position_m` and `rotation_xyzw`; it requests1 mm heave. This is an offline file interface, not a live Unity connection or CSV player. An unsolved or invalid input emits a diagnostic JSON with no partial six-leg result and exits2. Successful mathematical solves exit0, always with hardware output disabled.
+
+## Processed boat → visual IK
+
+`Scenes/SP09_BoatMotionIk.unity` is a separate copy of the archived SP06 simulation with a visual IK view added. SP05 boat/water physics, calibrated telemetry and SP06 processing are reused unchanged. The copied scene removes `MotionSerialTransport` and `SerialController`, disables the old comparison canvas/proxies, and starts with Calm water and an uncalibrated source. The original SP06 scene and manual SP09 preview remain independent.
+
+`Integration/ProcessedBoatIkBridge.cs` consumes `MotionPipelineController.LatestCommand` in LateUpdate. It maps neutral-relative translation metres at gain `0.02` and signed X pitch / Y yaw / Z roll degrees at default gain `0.45`, then constructs a quaternion using the same composition as SP06's processed display. The general preview boundary accepts metres plus a quaternion; it has no dependency on the boat or processing layer. No additional smoothing or physics changes are introduced.
+
+Examples: 100 mm processed heave becomes 2 mm visual heave; 8° processed pitch becomes 3.6° visual pitch. The bridge rejects an entire mapped pose beyond ±10 mm per translation axis or ±5° per rotation input, rather than clipping it. The Game panel exposes rotation gain `0..1` (`1` means the processed angle); the Inspector has the same range. Translation gain remains `0..0.1`, default `0.02`. Gain `0.45` is five times the previously tested `0.09`; raising gain still rejects poses exceeding the unchanged ±5° envelope. Those are visual demonstration bounds, not physical workspace limits. The existing SP06 pose/rate/acceleration flags remain visible in the panel. Its ±250 mm source heave bound maps to ±5 mm here.
+
+An invalid or disabled source, nonfinite input/gain, reversed source sequence/time or a sequence frozen for over 250 ms of real time hides the solved geometry. Freezing `Time.timeScale` also expires the source. Fresh data recovers automatically; a sequence/time restart requires Pause/Resume. Pause/Neutral explicitly displays mathematical neutral without stopping boat physics. Calibration must be done after the boat settles in Calm; wave buttons reuse the established Bow/Side/Crossed presets.
+
+Validation: [live test report](Reports/unity-boat-ik-check.json), [live IK render](Reports/unity-boat-ik.png). The initial 20-second crossed-wave run at gain `0.05` passed with zero pose rejections. The report records the latest rerun at the increased default rotation gain; observed heave remains bounded by 5 mm from the existing SP06 source clamp. Checks also passed uncalibrated-source rejection, frozen-time staleness, disabled-source rejection, recovery and pause-neutral. Mapping checks cover all three translation/rotation axes, metre scaling, invalid/NaN input and gain rejection, exact gain endpoints (including the corrected `0.1f` boundary), fivefold rotation without changing heave, envelope rejection, scene references, missing scripts and absence of serial components. This proves the software connection, not physical motion or unlimited source accuracy.
+
+The bridge lives outside the preview assembly because the existing SP06 runtime controller is in Unity's default assembly. Its dependency is one-way: SP06 → integration adapter → generic SP09 preview API. `BoatIkSceneBuilder.Open` is available from the menu; `BoatIkChecks.Run` and `BoatIkPlayModeCheck.Run` are Editor batch verification entry points, with the latter exiting Unity when complete.
+
+The user visually accepted the processed-motion connection and gains `0.02 / 0.45` on 2026-11-02. Preserve these as the visual baseline. Physical bring-up starts with reconciling the deferred horn-ball geometry and neutral pose, then measuring each servo's signed angle-to-pulse mapping and enforcing calibrated bounds. Validate small static poses and stop/watchdog behavior before boat playback; the visual gains do not approve a physical workspace.
 
 ## Geometry currently used
 
@@ -77,7 +94,7 @@ Validation on Unity6000.5.7f1 /URP17.5.0:
 - Actual Play mode passed neutral, +1 mm heave, +1° pitch, unreachable-pose rejection without stale linkages, neutral recovery, Scene target input and invariance under moving/rotating the preview root ([runtime report](Reports/unity-playmode-check.json)). Neutral geometry was rendered and visually inspected.
 - No packages, project settings, archived scenes or hardware sketches were changed. Play-mode checks are an Editor batch entry point, not a runtime feature. Menu **Ocean Motion → SP09 → Run numerical checks** reruns the mathematical comparison; `PreviewPlayModeCheck.Run` is a batch-only entry point that exits the Editor on completion.
 
-The user reviewed the Unity preview on 2026-11-02 and confirmed the layout and movement looked correct. Next: connect the existing motion-processing output to this visual target through a neutral-relative pose contract. Actual physical horn-side offsets, angular calibration/limits, joint/collision checks, full-platform Jacobian singularity/workspace checks, supply/load/reset behavior and small static physical poses remain separate proof gates before physical output. No measured height or physical safety envelope is established by these tests. Hardware remeasurement remains deferred as requested.
+The user reviewed the manual Unity preview on 2026-11-02 and confirmed the layout and movement looked correct. The processed boat-motion connection now passes automated checks; next is hands-on comparison of the boat and IK view, including wave directions and Pause/Neutral. Actual physical horn-side offsets, angular calibration/limits, joint/collision checks, full-platform Jacobian singularity/workspace checks, supply/load/reset behavior and small static physical poses remain separate proof gates before physical output. No measured height or physical safety envelope is established by these tests. Hardware remeasurement remains deferred as requested.
 
 ## Sources and provenance
 
