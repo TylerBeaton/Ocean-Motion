@@ -1,5 +1,7 @@
 # Bench observations — 2026-10-31
 
+Subsequent assembled single-channel endpoint records are saved in [08_EXTENT_TEST/OBSERVATIONS.md](../08_EXTENT_TEST/OBSERVATIONS.md) and its dated CSV. User supplied all six1000–2000 µs numeric ranges at11:57:19; all are software-limited, not discovered mechanical bounds or final IK limits. This file remains the neutral/direction and disconnected-check record.
+
 Latest restart values supersede the earlier 2026-10-29 provisional values. User reconfirmed shared-side pairs A=[0,5], B=[1,2], C=[3,4], with labels matching PCA9685 channels. Faulty physical servo 5 was replaced before these checks.
 
 ## Provisional neutral and raise direction
@@ -30,6 +32,10 @@ Actual motion/hold duration was not measured. No buzzing, binding or settling is
 Initial pulse ceiling 1600 µs was reached during channel 1 neutral alignment. Ceiling was increased to1650 µs, uploaded and verified in serial status before B/C paired checks. Minimum remains1400 µs, pair offset window ±50 µs, tested offset only ±25 µs. Software bounds are not physical travel limits. Current sketch loses calibration on reset/x/pair change, and only enables the selected pair.
 
 ## Next stage prerequisites
+
+### Neutral-hold observation — 2026-10-31
+
+User uploaded `08_NEUTRAL_HOLD`, with pushrods attached and the unloaded plate supported. Serial status11:19:45 confirmed all six enabled at the reference pulses in the table above. User subsequently confirmed the plate looked level and completely quiet, with everything looking good. No extended timed hold or measured electrical data supplied. This satisfies the brief all-six reference holding check for this supported assembly; it does not establish moving/load performance or mechanical extents. The neutral-hold README's preferred disconnected first-check procedure was not the actual test configuration. Subsequent individual and coordinated software-endpoint trials completed with reported quiet/clear motion and normal returns; see ../08_EXTENT_TEST/OBSERVATIONS.md and ../08_GROUP_TEST/OBSERVATIONS.md.
 
 - Preserve these per-channel settings in the next controller stage; verify all six reference positions with the plate supported and pushrods disconnected.
 - Before assembling and moving the linkage, provide coordinated holding of all six at neutral. Current pair-only sketch disables other channels; do not rely on it to support a fully connected platform.
