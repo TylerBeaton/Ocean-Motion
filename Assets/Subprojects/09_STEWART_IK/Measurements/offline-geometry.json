@@ -1,0 +1,206 @@
+{
+  "schema_version": 1,
+  "status": "OFFLINE_PROVISIONAL_CAD_HORN_OFFSETS_NOT_PHYSICAL_CALIBRATION",
+  "length_units": "mm",
+  "coordinate_frame": "fusion_z_up",
+  "hardware_output_enabled": false,
+  "source_measurements": [
+    "servo-shafts-fusion.json",
+    "top-joints-fusion.json",
+    "horn-joints-fusion.json",
+    "physical-link-lengths.json",
+    "physical-neutral-pose.json"
+  ],
+  "unverified_assumptions": [
+    "Horn ball joints mount on the other side in hardware; current axial offsets are explicitly deferred CAD placeholders, not automatically negated physical offsets.",
+    "Neutral height is rough; horizontal origin, yaw and level are assumed from the reported model/control frame.",
+    "35mm radius and184.5mm rods provisionally apply to all six; matching/tolerances unmeasured.",
+    "Initial solution branch is closest to each CAD radial reference at provisional neutral, not physically confirmed.",
+    "Pulse-to-angle calibration and actual joint-angle limits are missing;1000..2000us cannot be converted to angle bounds yet.",
+    "Collision, ball-joint articulation, full-platform Jacobian singularities, payload and supply capacity are not validated."
+  ],
+  "neutral_pose": {
+    "position_mm": [
+      0.0,
+      0.0,
+      181.4
+    ],
+    "rotation_xyzw": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "definition": "Fusion-aligned CONTROL frame at neutral, not the CAD component's local transform"
+  },
+  "legs": [
+    {
+      "channel": 0,
+      "shaft_point_mm": [
+        -125.097,
+        -7.325,
+        16.0
+      ],
+      "shaft_axis": [
+        -0.86603905187,
+        -0.499976360077,
+        0.0
+      ],
+      "axial_offset_mm": 6.84979132762,
+      "axial_offset_status": "UNVERIFIED_CAD_PLACEHOLDER_PHYSICAL_SIDE_DIFFERS",
+      "reference_radial_direction": [
+        0.499775500854,
+        -0.865691131559,
+        -0.028342785433
+      ],
+      "top_local_mm": [
+        -75.937,
+        25.794,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 1,
+      "shaft_point_mm": [
+        -71.16,
+        -105.747,
+        16.0
+      ],
+      "shaft_axis": [
+        -0.866019052629,
+        -0.500011000363,
+        0.0
+      ],
+      "axial_offset_mm": 6.850030702338,
+      "axial_offset_status": "UNVERIFIED_CAD_PLACEHOLDER_PHYSICAL_SIDE_DIFFERS",
+      "reference_radial_direction": [
+        -0.499944219863,
+        0.865903388803,
+        -0.01634314182
+      ],
+      "top_local_mm": [
+        -15.582,
+        -78.747,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 2,
+      "shaft_point_mm": [
+        68.892,
+        -104.675,
+        16.0
+      ],
+      "shaft_axis": [
+        0.86603905187,
+        -0.499976360077,
+        0.0
+      ],
+      "axial_offset_mm": 6.851100065706,
+      "axial_offset_status": "UNVERIFIED_CAD_PLACEHOLDER_PHYSICAL_SIDE_DIFFERS",
+      "reference_radial_direction": [
+        0.499762746796,
+        0.865669039489,
+        -0.029228598738
+      ],
+      "top_local_mm": [
+        15.792,
+        -78.747,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 3,
+      "shaft_point_mm": [
+        127.16,
+        -8.753,
+        16.0
+      ],
+      "shaft_axis": [
+        0.866019052629,
+        -0.500011000363,
+        0.0
+      ],
+      "axial_offset_mm": 6.850360709588,
+      "axial_offset_status": "UNVERIFIED_CAD_PLACEHOLDER_PHYSICAL_SIDE_DIFFERS",
+      "reference_radial_direction": [
+        -0.499936292218,
+        -0.865889658121,
+        -0.017285938869
+      ],
+      "top_local_mm": [
+        76.149,
+        25.792,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 4,
+      "shaft_point_mm": [
+        56.205,
+        112.0,
+        16.0
+      ],
+      "shaft_axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "axial_offset_mm": 6.85,
+      "axial_offset_status": "UNVERIFIED_CAD_PLACEHOLDER_PHYSICAL_SIDE_DIFFERS",
+      "reference_radial_direction": [
+        -0.99958518255,
+        0.0,
+        -0.028800396284
+      ],
+      "top_local_mm": [
+        60.462,
+        52.963,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 5,
+      "shaft_point_mm": [
+        -56.0,
+        114.5,
+        16.0
+      ],
+      "shaft_axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "axial_offset_mm": 6.85,
+      "axial_offset_status": "UNVERIFIED_CAD_PLACEHOLDER_PHYSICAL_SIDE_DIFFERS",
+      "reference_radial_direction": [
+        0.999858869554,
+        0.0,
+        -0.016800029013
+      ],
+      "top_local_mm": [
+        -60.25,
+        52.964,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    }
+  ]
+}

@@ -1,38 +1,52 @@
-# Handoff — initial servo pair proof complete, 2026-10-31
+# Ocean Motion checkpoint — offline IK ready for Unity preview
 
-User prefers short, one-stage-at-a-time guidance. They requested pushing these sketches and calibration results to the existing branch before proceeding to assembled-linkage testing.
+Updated2026-11-02. User ran the Python scripts, reported everything looks good, and requested publishing all work before proceeding. Keep replies concise and avoid restarting completed tests/measurement collection without cause.
 
-## Latest physical checkpoint
+## Current stage and next gate
 
-Read CALIBRATION.md for the definitive observations. Neutral by PCA9685 channel 0..5: [1500,1600,1550,1600,1500,1500] µs; raise direction signs [+1,-1,+1,-1,+1,-1]. User reconfirmed shared sides A=[0,5], B=[1,2], C=[3,4]. Faulty physical servo 5 was replaced before restart. All three pairs moved up/down quietly with disconnected pushrods at offsets ±25 µs and returned to saved neutral, confirmed by serial status.
+Offline mathematical foundation is implemented in `Assets/Subprojects/09_STEWART_IK/Offline/`; current guide/report are in that subproject's README and Reports/. User has exercised the scripts successfully. Next is a LIVE UNITY VISUAL PREVIEW of solved geometry, with hardware output disabled. Do not interpret "online" as permission to stream these uncalibrated angles to servos.
 
-Latest status at 11:03:15: PAIRED C selected=4 offset_us=0 step_us=25. Channels 3/4 both enabled, command_us=level_us=1600/1500, directions -1/+1. Agent then instructed user to support the plate, send x and turn servo power OFF, leaving pushrods disconnected. Shutdown completion has not been confirmed.
+Before adding C# runtime components or a new scene, verify the last known-good archived scene compiles per AGENTS.md. Existing successful compilation log evidence was inspected previously, but no fresh archived-scene compile was performed during the pure-Python stage. Project stays Unity6000.5.7f1/URP17.5.0. Preserve SP07/Final IK and all earlier archives; build the next preview within SP09. No C# adapter/scene/transport is implemented yet.
 
-No physical extents, assembled neutral pose, calibrated angle-to-pulse maps, full workspace or IK integration have been established. The values above are visually aligned horn reference commands, not actual angle measurements. Preserve that distinction.
+## Current geometry
 
-## Next stage
+All raw/corrected data, provenance and derived frames live under `Assets/Subprojects/09_STEWART_IK/Measurements/`.
 
-Current pair-only sketch disables the other four channels and loses calibration on pair change/reset/x. Before assembled-platform travel testing, create a small separate next-stage sketch that holds all six at their recorded references and validates that foundation before adding pair movement. Keep existing sketches as independent stage records. Do not instruct the user to connect and move the whole platform while relying on four unpowered servos.
+- Use corrected servo-shafts-fusion.json, not its superseded wrong-feature archive. ShaftP/Q Z16mm, separation12.5mm, directions0/1≈(-0.866025,-0.5,0),2/3≈(+0.866025,-0.5,0),4/5=(0,1,0).
+- Top coordinates final, including T3=(76.149,25.792,191.712). User explicitly clarified servo i→Ti; no further top permutation/tracing is needed. Earlier top-mapping confusion is resolved.
+- CAD control centre(0,0,191.712); local top anchors have Z0. Control axes chosen parallel to Fusion global at neutral, not assumed equal to the imported component transform.
+- Physical shaft-plane→top-joint-plane height roughly165.4mm, yielding provisional global neutral centre(0,0,181.4) using shaft datumZ16. Raw CAD positions remain unchanged. Horizontal position/yaw/level and measurement tolerance not independently characterized.
+- Actual reported horn radius35mm and rods184.5mm provisionally apply to all6.
+- CAD H points establish about+6.85mm axial offset along each shaft and CAD radial references. Physical ball joints mount on the OTHER SIDE of the horn. User explicitly defers remeasurement; keep offsets configurable/UNVERIFIED. Do not simply negate6.85mm or treat CAD horn angles as physical neutral angles. Physical axial offset remains unknown/null in source data.
+- Neither horn-angle/PWM mapping nor calibrated joint-angle bounds exists. Earlier1000..2000us observations are not angle limits.
 
-First confirm supported plate, disconnected pushrods and power OFF before upload/preparation. Then guide verification of all-six reference positions and quiet holding, supply/distribution suitability, and assembled neutral geometry without preload. Only after that proof proceed to supported linkage travel checks with conservative staged bounds. Never seek hard stops or stalls. No new controller stage is implemented yet.
+Editable `Measurements/offline-geometry.json` is the runnable snapshot. `build_geometry.py` regenerates CAD placeholders from raw sources and refuses existing output without --force; avoid overwriting later physical corrections. Numeric solver output NEVER enables hardware even if metadata is edited.
 
-## Current files and commands
+## Offline solver and verification
 
-Use 08_PAIR_CALIBRATION.ino in this folder. Original ../08_PAIR_A_CALIBRATION/ is preserved as the initial two-servo experiment. Current sketch defaults to A with all PWM outputs disabled. Serial 115200 / Newline; one character per submission.
+Analytic arbitrary-axis horn-circle solver: C=P+d*a, H=C+r*(u*cos(theta)+(a×u)*sin(theta)), |T-H|=L. Two candidates; provisional neutral branch nearest CAD radial reference, then pinned. Unwrap near previous angles. Reject entire pose without partial output for unreachable/indeterminate/tangent legs, configured angle-limit or optional continuity-step violations; verify reconstructed rod lengths.
 
-- a/b/c select pair only when outputs disabled; reset neutral and direction signs.
-- 0..5 select a channel belonging to active pair; e enables it at nominal1500 µs.
-- g selects coarse25 µs; f selects fine5 µs in individual or paired mode without moving.
-- +/- make one step and hold. Individual movement invalidates that servo's saved neutral.
-- r reverses individual direction without motion; s saves level in RAM.
-- p enters paired mode after both levels saved; x disables ALL PWM and clears calibration; ? prints status.
+Python3.9+ stdlib only. `run_ik.py` accepts neutral-relative Fusion mm/quaternion or offline Unity JSON metre/quaternion. Proposed basis B maps Unity(x,y,z)→Fusion(x,z,y), rotations R_F=B*R_U*B^T. Established Unity X=pitch,Y=yaw,Z=roll,Y displacement=heave. No wrapped Euler contract. Live scene orientation/scale alignment still requires visual validation. No CSV player, serial/PWM bridge or current feedback.
 
-Current absolute window1400..1650 µs; paired offset±50 µs. Initial ceiling1600 was raised after finding channel1 visually level at1600. Only±25 offsets have been physically checked; software bounds are not measured safe travel. Reset/upload clears calibration; documented settings are not auto-loaded. No automatic sweep/neutral jump, position feedback or serial-disconnect shutdown.
+Tests/results already passed:
+- 15 unit tests, including250 deterministic small random poses, independent rod/radius/plane invariants, arbitrary-axis and signed offsets, both roots, bad/tangent/unreachable inputs, optional angle bounds, whole-pose/step rejection,2-turn branch continuity, Unity basis/quaternion/rotated-neutral tests, editable offsets and disabled hardware output.
+- 15 report fixtures: neutral,±1mm translations and±1° rotations for all6 axes, combined pose, rejection of1m heave.
+- 181-sample continuous tilt/heave path: max consecutive motor-angle change0.165692°, numerical rod residual≤5.68e-14mm. Numerical consistency is NOT physical measurement accuracy or workspace validation.
 
-## Hardware and verification
+Angles are signed about P→Q from the configured CAD radial vector, not Arduino Servo.write angles or PWM. No physical branch validation, collision/joint articulation/full Jacobian workspace proof or physical calibration completed. User defers horn remeasurement until setup ready; respect that scope.
 
-UNO R4 WiFi, PCA9685 at0x40 /50 Hz, Deegoo/TowerPro-labelled MG996R-class servos with unverified authenticity, supply reported5 V /3 A. All-six loaded operation remains unvalidated. Old servo5 repair was abandoned after swap testing and inconclusive inspection; do not resume diagnosis unless asked.
+## Completed hardware bench experiments
 
-Final window revision compiled for arduino:renesas_uno:unor4wifi (core1.6.0, Adafruit PWM Servo Driver3.0.3), using65868 bytes flash /9292 bytes RAM. Temporary host checks with simulated PWM passed all-pair channel mapping, startup-off behavior, calibration prerequisites, pair-switch lockout, coarse/fine movement, reversal, bounds, no partial outputs on rejection, exact B restoration and return to neutral. User uploaded and verified final ceiling before B/C paired checks. Tests do not verify physical position or load capability. No Unity assets changed; existing successful Unity compilation log inspected.
+UNO R4 WiFi, PCA9685 address0x40 at50Hz, Deegoo/TowerPro-labelled MG996R-class units, unverified authenticity; supply reported5V/3A. Failed servo5 replaced. Actual shared-side pairs A=[0,5],B=[1,2],C=[3,4]. Neutral pulses channels0..5=[1500,1600,1550,1600,1500,1500]us; horn raise signs=[+1,-1,+1,-1,+1,-1].
 
-Branch feature/unity-fusion-telemetry, origin fetched and synchronized before publication. Only the two Arduino calibration directories belong to this work. Preserve unrelated work and follow root AGENTS.md. See Git history for the publication commit.
+- Disconnected pair±25us motion/return proofs completed; CALIBRATION.md holds references/directions.
+- Supported unloaded assembly, rods attached: all6 neutral holding quiet and visually level per user; no timed endurance/electrical data.
+- Individual trials with five fixed at neutral reached1000..2000us software guardrails for all6; user reported quiet/clear movement and normal returns. Records in Arduino/08_EXTENT_TEST/.
+- Group interpolation raised path endpoint[2000,1000,2000,1000,2000,1000],lowered reverse. Both±100% recorded; user reported no buzzing/interference and normal return to neutral. Records in Arduino/08_GROUP_TEST/. No actual height/tilt measured; not an IK pure-heave or full workspace proof.
+- Neutral-hold, extent and group firmware each compiled for UNO R4 and passed persistent simulated PWM/Serial/clock tests. Physical power-off after the session was not explicitly confirmed. No further motion was commanded by the agent.
+
+Support the plate before x (releases all PWM); supplyOFF before upload/wiring. Reset starts outputs OFF and does not physically home. Serial disconnect holds last commands. No measured current/load/thermal capacity, stall detection or actuator-power emergency stop integration yet.
+
+## Publication
+
+Repository: origin https://github.com/TylerBeaton/Ocean-Motion.git, active branch feature/unity-fusion-telemetry. Initial pair calibration was35c9ec0. User explicitly requested pushing the remaining bench and offline IK work. See Git history for the new publication commits; preserve unrelated future work. Notion Updates08/09 already contain the earlier hardware results/IK checklist; they have not yet been updated for this new offline implementation.

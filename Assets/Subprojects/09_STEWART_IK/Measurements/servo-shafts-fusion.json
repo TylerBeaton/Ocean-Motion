@@ -1,0 +1,141 @@
+{
+  "dataset_status": "corrected_user_reported_servo_shaft_geometry_partial_ik_inputs",
+  "ready_for_hardware_output": false,
+  "recorded_date": "2026-11-02",
+  "source": "Corrected six-servo Fusion P/Q measurements supplied by user after feature-selection and selection-order clarification",
+  "supersedes": "archive/servo-shafts-fusion-superseded-2026-11-02.json",
+  "position_units": "mm",
+  "frame": {
+    "name": "reported_fusion_global_frame",
+    "vertical_axis_reported": "Z",
+    "origin_definition": null,
+    "common_global_frame_basis": "User provided corrected measurements after global-frame and origin-first selection-order guidance; exact physical origin datum still to be documented",
+    "fusion_to_unity_conversion_applied": false
+  },
+  "point_definitions": {
+    "p": "User-reported output-shaft centre at horn mounting plane",
+    "q": "Second point on same output-shaft axis",
+    "axis_p_to_q": "Unit vector (q-p)/norm(q-p), dimensionless; not the physical horn raise sign"
+  },
+  "servos": [
+    {
+      "channel": 0,
+      "p_mm": [
+        -125.097,
+        -7.325,
+        16.0
+      ],
+      "q_mm": [
+        -135.923,
+        -13.575,
+        16.0
+      ],
+      "pq_length_mm": 12.500591026028,
+      "axis_p_to_q": [
+        -0.86603905187,
+        -0.499976360077,
+        0.0
+      ]
+    },
+    {
+      "channel": 1,
+      "p_mm": [
+        -71.16,
+        -105.747,
+        16.0
+      ],
+      "q_mm": [
+        -81.985,
+        -111.997,
+        16.0
+      ],
+      "pq_length_mm": 12.499724996975,
+      "axis_p_to_q": [
+        -0.866019052629,
+        -0.500011000363,
+        0.0
+      ]
+    },
+    {
+      "channel": 2,
+      "p_mm": [
+        68.892,
+        -104.675,
+        16.0
+      ],
+      "q_mm": [
+        79.718,
+        -110.925,
+        16.0
+      ],
+      "pq_length_mm": 12.500591026028,
+      "axis_p_to_q": [
+        0.86603905187,
+        -0.499976360077,
+        0.0
+      ]
+    },
+    {
+      "channel": 3,
+      "p_mm": [
+        127.16,
+        -8.753,
+        16.0
+      ],
+      "q_mm": [
+        137.985,
+        -15.003,
+        16.0
+      ],
+      "pq_length_mm": 12.499724996975,
+      "axis_p_to_q": [
+        0.866019052629,
+        -0.500011000363,
+        0.0
+      ]
+    },
+    {
+      "channel": 4,
+      "p_mm": [
+        56.205,
+        112.0,
+        16.0
+      ],
+      "q_mm": [
+        56.205,
+        124.5,
+        16.0
+      ],
+      "pq_length_mm": 12.5,
+      "axis_p_to_q": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "channel": 5,
+      "p_mm": [
+        -56.0,
+        114.5,
+        16.0
+      ],
+      "q_mm": [
+        -56.0,
+        127.0,
+        16.0
+      ],
+      "pq_length_mm": 12.5,
+      "axis_p_to_q": [
+        0.0,
+        1.0,
+        0.0
+      ]
+    }
+  ],
+  "unresolved_observations": [
+    "Exact origin datum and correspondence of CAD servo mounts to physical assembly still need documentation.",
+    "Actual horn radii, rod joint-centre lengths, top joint coordinates, neutral platform pose and angle-to-pulse maps remain incomplete.",
+    "All corrected shaft P and Q heights are 16.000 mm; earlier Z-discrepancy analysis applied to the superseded point set only."
+  ]
+}

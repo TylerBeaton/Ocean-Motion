@@ -1,0 +1,156 @@
+{
+  "dataset_status": "final_user_reported_top_attachment_locations_identity_channel_mapping",
+  "ready_for_hardware_output": false,
+  "recorded_date": "2026-11-02",
+  "source": "User-reported T0..T5 top attachment centres after origin-first/global-frame measurement guidance",
+  "position_units": "mm",
+  "frame": {
+    "name": "reported_fusion_global_frame",
+    "vertical_axis": "Z",
+    "top_plate_origin_global_mm": [
+      0.0,
+      0.0,
+      191.712
+    ],
+    "top_plate_neutral_orientation": {
+      "quaternion_xyzw": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "definition": "Chosen platform CONTROL frame axes parallel to Fusion global axes at reported neutral; not a measured CAD component-local transform"
+    },
+    "fusion_to_unity_conversion_applied": false,
+    "raw_positions_are_global": true,
+    "derived_local_positions_available": true,
+    "fusion_pose_matches_physical_calibrated_neutral_user_confirmed": true,
+    "earlier_neutral_match_confirmation_superseded_by_physical_height_measurement": true,
+    "physical_neutral_pose_estimate_source": "physical-neutral-pose.json"
+  },
+  "point_definition": "Top ball-joint centre connected by a rod to the corresponding servo channel",
+  "top_joints": [
+    {
+      "channel": 0,
+      "t_global_mm": [
+        -75.937,
+        25.794,
+        191.712
+      ],
+      "t_local_mm": [
+        -75.937,
+        25.794,
+        0.0
+      ]
+    },
+    {
+      "channel": 1,
+      "t_global_mm": [
+        -15.582,
+        -78.747,
+        191.712
+      ],
+      "t_local_mm": [
+        -15.582,
+        -78.747,
+        0.0
+      ]
+    },
+    {
+      "channel": 2,
+      "t_global_mm": [
+        15.792,
+        -78.747,
+        191.712
+      ],
+      "t_local_mm": [
+        15.792,
+        -78.747,
+        0.0
+      ]
+    },
+    {
+      "channel": 3,
+      "t_global_mm": [
+        76.149,
+        25.792,
+        191.712
+      ],
+      "t_local_mm": [
+        76.149,
+        25.792,
+        0.0
+      ]
+    },
+    {
+      "channel": 4,
+      "t_global_mm": [
+        60.462,
+        52.963,
+        191.712
+      ],
+      "t_local_mm": [
+        60.462,
+        52.963,
+        0.0
+      ]
+    },
+    {
+      "channel": 5,
+      "t_global_mm": [
+        -60.25,
+        52.964,
+        191.712
+      ],
+      "t_local_mm": [
+        -60.25,
+        52.964,
+        0.0
+      ]
+    }
+  ],
+  "derived_observations": {
+    "common_top_joint_z_mm": 191.712,
+    "shaft_pivot_z_mm": 16.0,
+    "top_joint_plane_above_shaft_pivot_plane_mm": 175.712,
+    "exact_duplicate_channel_pairs": []
+  },
+  "unresolved_observations": [
+    "Neutral control-frame axes are a documented coordinate choice; conversion to Unity remains unapplied.",
+    "Horn-to-pushrod joint geometry/assembly branch, possible axial offset along shaft, and measured angle-to-pulse calibration remain unverified.",
+    "The 175.712 mm top-joint-plane/shaft-pivot-plane separation is not the pushrod length or necessarily plate-surface separation.",
+    "Later rough measured physical plane separation165.4mm supersedes visual neutral-height equivalence to CAD175.712mm; raw global CAD points remain unchanged."
+  ],
+  "corrections": [
+    {
+      "channel": 3,
+      "previous_t_global_mm": [
+        60.462,
+        52.963,
+        191.712
+      ],
+      "corrected_t_global_mm": [
+        76.149,
+        25.792,
+        191.712
+      ],
+      "reason": "User initially selected the wrong mount and supplied corrected T3."
+    }
+  ],
+  "physical_linkage_correspondence": {
+    "status": "user_clarified_supplied_top_points_are_final_locations",
+    "user_report": "Fusion linkages connect on the same side as the servo; physical linkages connect on the adjacent side.",
+    "exact_changed_end": "Final top coordinates/mapping already supplied; only opposite-side physical horn joint geometry remains deferred.",
+    "CAD_channel_labels_are_physical_mapping_verified": true,
+    "physical_servo_to_CAD_top_location_map": {
+      "0": "T0",
+      "1": "T1",
+      "2": "T2",
+      "3": "T3",
+      "4": "T4",
+      "5": "T5"
+    },
+    "horn_remeasurement_status": "explicitly deferred by user until setup is ready",
+    "mapping_source": "User clarified the supplied top measurements already describe the final attachment locations; T numbers were collected by connected servo channel."
+  }
+}

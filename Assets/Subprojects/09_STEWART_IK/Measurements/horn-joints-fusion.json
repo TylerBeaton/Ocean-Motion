@@ -1,0 +1,154 @@
+{
+  "dataset_status": "user_reported_CAD_horn_joint_geometry_pending_physical_pose_reconciliation",
+  "ready_for_hardware_output": false,
+  "recorded_date": "2026-11-02",
+  "position_units": "mm",
+  "frame": "reported_fusion_global_frame",
+  "source": "User explicitly re-supplied H0..H5 as horn-to-pushrod ball-joint centres",
+  "physical_horn_radius_reported_mm": 35.0,
+  "physical_rod_joint_centre_length_reported_mm": 184.5,
+  "horn_joints": [
+    {
+      "channel": 0,
+      "h_global_mm": [
+        -113.537,
+        -41.049,
+        15.008
+      ],
+      "derived_axial_offset_along_P_to_Q_mm": 6.84979132762,
+      "derived_horn_circle_centre_global_mm": [
+        -131.029186786881,
+        -10.749733735271,
+        16.0
+      ],
+      "derived_perpendicular_horn_radius_mm": 35.000088553717,
+      "CAD_reference_radial_unit_direction": [
+        0.499775500854,
+        -0.865691131559,
+        -0.028342785433
+      ],
+      "CAD_H_to_T_length_mm": 192.629307907701,
+      "CAD_rod_minus_reported_physical_rod_mm": 8.129307907701
+    },
+    {
+      "channel": 1,
+      "h_global_mm": [
+        -94.59,
+        -78.866,
+        15.428
+      ],
+      "derived_axial_offset_along_P_to_Q_mm": 6.850030702338,
+      "derived_horn_circle_centre_global_mm": [
+        -77.092257099317,
+        -109.172090703993,
+        16.0
+      ],
+      "derived_perpendicular_horn_radius_mm": 34.999390342933,
+      "CAD_reference_radial_unit_direction": [
+        -0.499944219863,
+        0.865903388803,
+        -0.01634314182
+      ],
+      "CAD_H_to_T_length_mm": 193.17951982806,
+      "CAD_rod_minus_reported_physical_rod_mm": 8.67951982806
+    },
+    {
+      "channel": 2,
+      "h_global_mm": [
+        92.317,
+        -77.802,
+        14.977
+      ],
+      "derived_axial_offset_along_P_to_Q_mm": 6.851100065706,
+      "derived_horn_circle_centre_global_mm": [
+        74.825320205172,
+        -108.100388073376,
+        16.0
+      ],
+      "derived_perpendicular_horn_radius_mm": 34.999967298409,
+      "CAD_reference_radial_unit_direction": [
+        0.499762746796,
+        0.865669039489,
+        -0.029228598738
+      ],
+      "CAD_H_to_T_length_mm": 192.59342895073,
+      "CAD_rod_minus_reported_physical_rod_mm": 8.09342895073
+    },
+    {
+      "channel": 3,
+      "h_global_mm": [
+        115.595,
+        -42.484,
+        15.395
+      ],
+      "derived_axial_offset_along_P_to_Q_mm": 6.850360709588,
+      "derived_horn_circle_centre_global_mm": [
+        133.092542891883,
+        -12.178255711248,
+        16.0
+      ],
+      "derived_perpendicular_horn_radius_mm": 34.999545270596,
+      "CAD_reference_radial_unit_direction": [
+        -0.499936292218,
+        -0.865889658121,
+        -0.017285938869
+      ],
+      "CAD_H_to_T_length_mm": 193.145757346621,
+      "CAD_rod_minus_reported_physical_rod_mm": 8.645757346621
+    },
+    {
+      "channel": 4,
+      "h_global_mm": [
+        21.22,
+        118.85,
+        14.992
+      ],
+      "derived_axial_offset_along_P_to_Q_mm": 6.85,
+      "derived_horn_circle_centre_global_mm": [
+        56.205,
+        118.85,
+        16.0
+      ],
+      "derived_perpendicular_horn_radius_mm": 34.999518410972,
+      "CAD_reference_radial_unit_direction": [
+        -0.99958518255,
+        0.0,
+        -0.028800396284
+      ],
+      "CAD_H_to_T_length_mm": 192.642128655702,
+      "CAD_rod_minus_reported_physical_rod_mm": 8.142128655702
+    },
+    {
+      "channel": 5,
+      "h_global_mm": [
+        -21.005,
+        121.35,
+        15.412
+      ],
+      "derived_axial_offset_along_P_to_Q_mm": 6.85,
+      "derived_horn_circle_centre_global_mm": [
+        -56.0,
+        121.35,
+        16.0
+      ],
+      "derived_perpendicular_horn_radius_mm": 34.999939557091,
+      "CAD_reference_radial_unit_direction": [
+        0.999858869554,
+        0.0,
+        -0.016800029013
+      ],
+      "CAD_H_to_T_length_mm": 193.128208765576,
+      "CAD_rod_minus_reported_physical_rod_mm": 8.628208765576
+    }
+  ],
+  "limitations": [
+    "H data describes the CAD pose, not independently measured physical horn angles at neutral PWM.",
+    "CAD H-to-T distances differ from the physical184.5 mm rods; do not combine CAD horn angles with physical rod lengths as a verified neutral configuration.",
+    "Axial offset along shaft must be modeled; a horn circle through mounting-plane P is incorrect for these reported H points.",
+    "Physical neutral top-joint-plane height and actual horn angle-to-pulse mapping need verification; earlier user said CAD top pose intended to match physical neutral.",
+    "Do not simply negate the CAD6.85mm axial offset: opposite-side installation can change offset magnitude as well as direction. Use a configurable unverified placeholder only for offline work until measured."
+  ],
+  "physical_connection_correspondence": "User confirms physical ball joints mounted on other side of horn than CAD; physical axial offset unmeasured and explicitly deferred.",
+  "physical_axial_offset_along_shaft_mm": null,
+  "physical_horn_offset_remeasurement_deferred_by_user": true
+}
