@@ -49,7 +49,7 @@ The user authorized moving toward physical bring-up, but deferred actual work un
 - Unity X rotation=pitch, Y=yaw, Z=roll, Y translation=heave. Unity metres/quaternion → Fusion mm via basis B swapping Y/Z; `R_F=B R_U B^T`. Do not swap wrapped Euler components as a pose contract.
 - Python: `Offline/stewart_ik.py`, `run_ik.py`, `validate_ik.py`, `build_unity_fixtures.py`; C# pure core: `Scripts/Core/RotaryStewartModel.cs`.
 - Integration adapter: `Integration/ProcessedBoatIkBridge.cs`, consuming unchanged SP06 `LatestCommand`. Preview accepts metres/quaternion and remains independent of boat/serial code. Boat scene has no `SerialController` or `MotionSerialTransport` components.
-- Notion has earlier bench/IK planning notes; these Unity integration updates have not been copied there. The repository handoff is the current resume source.
+- Notion was updated on 2026-11-02: [Project overview](https://app.notion.com/p/38fa073d8e27803da7dad64a5c2fe05b), [Update 09](https://app.notion.com/p/3b8a073d8e27813bb28feaaf9c20da61) and [Update 08](https://app.notion.com/p/3b8a073d8e2781009ecacbce4a063c36) now record the accepted Unity integration, gains, test results, publication and next physical steps. Update 09 is In progress; physical output/calibration and the final architecture gate remain open. This handoff is the detailed repository resume source.
 
 ## Suggested next-session opening
 
