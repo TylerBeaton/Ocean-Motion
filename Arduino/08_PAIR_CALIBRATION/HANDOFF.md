@@ -1,5 +1,7 @@
 # Ocean Motion checkpoint — offline IK ready for Unity preview
 
+> Superseded resume checkpoint: see [SP09 current handoff](../../Assets/Subprojects/09_STEWART_IK/HANDOFF.md). The Unity preview and processed boat connection are now complete and accepted; next is physical geometry reconciliation and angle-to-pulse calibration. The historical details below are retained for provenance.
+
 Updated2026-11-02. User ran the Python scripts, reported everything looks good, and requested publishing all work before proceeding. Keep replies concise and avoid restarting completed tests/measurement collection without cause.
 
 ## Current stage and next gate

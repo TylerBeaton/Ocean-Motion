@@ -4,6 +4,7 @@ This stage now has a runnable analytical solver for the current rotary prototype
 
 ## Start here
 
+- [Current handoff / next physical-calibration steps](HANDOFF.md). Visual motion is accepted; physical output remains disabled.
 - For processed boat motion, choose **Ocean Motion → SP09 → Open Boat Motion IK**, then **Play**. Let the boat settle in **Calm**, click **Calibrate boat neutral**, then select **Bow**, **Side** or **Crossed**. Boat motion appears on the left and the solved platform on the right. **Pause / Neutral** holds the visual target at neutral while the boat keeps simulating; **Resume boat** reconnects the processed pose.
 - In Unity, choose **Ocean Motion → SP09 → Open IK Preview**, then press **Play**. Start with **Heave +1 mm**, **Neutral**, then **Pitch +1°**. The six coloured linkages solve individually for the requested top-plate pose.
 - [Preview scene](Scenes/SP09_IkPreview.unity) and [rendered neutral geometry](Reports/unity-preview-neutral.png). The scene is independent of the archived milestones; geometry is generated on entering Play mode.
