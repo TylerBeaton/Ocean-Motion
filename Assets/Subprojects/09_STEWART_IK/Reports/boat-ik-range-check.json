@@ -1,0 +1,12 @@
+{
+  "software_checks_passed": true,
+  "usb_opened": false,
+  "physical_expanded_range_test_completed": false,
+  "wave_gain_checked": 0.45,
+  "heave_gain": 0.002,
+  "allowance_checked_us": 200,
+  "maximum_selectable_us": 250,
+  "rejected_frames": 33,
+  "mapped_frames": 3265,
+  "peak_offset_us": 173
+}

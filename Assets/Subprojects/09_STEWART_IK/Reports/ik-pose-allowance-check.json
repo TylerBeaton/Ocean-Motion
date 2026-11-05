@@ -1,0 +1,8 @@
+{
+  "software_checks_passed": true,
+  "usb_opened": false,
+  "physical_test_completed": false,
+  "pose_controls_max_deg": 10,
+  "full_simulated_pitch_sweep_deg": 5,
+  "firmware_pulse_cap_us": 250
+}

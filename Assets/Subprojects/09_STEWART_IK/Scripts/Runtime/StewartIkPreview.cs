@@ -11,6 +11,9 @@ namespace OceanMotion.Subproject09.Preview
         public Transform target;
         public Camera viewCamera;
         public bool useSceneTarget;
+        public string sourceDescription="Source boat (left) → visual IK (right)";
+        public string outputDescription="Visual IK preview • hardware output OFF";
+        public string resumeLabel="Resume boat";
         public Vector3 translationMm;
         public Vector3 rotationDegrees;
         public IkResult CurrentResult { get; private set; }
@@ -188,7 +191,7 @@ namespace OceanMotion.Subproject09.Preview
             GUI.skin.label.wordWrap=true;
             GUILayout.BeginArea(new Rect(12,12,340,Screen.height-24),GUI.skin.box);
             GUILayout.Label("OCEAN MOTION / SP09",new GUIStyle(GUI.skin.label){fontSize=20,fontStyle=FontStyle.Bold});
-            GUILayout.Label("Visual IK preview • hardware output OFF");
+            GUILayout.Label(outputDescription);
             GUILayout.Label("Provisional geometry. Horn offsets and pulse/angle calibration remain unverified.");
             GUILayout.Space(8);
             if (ExternalControl)
@@ -196,10 +199,10 @@ namespace OceanMotion.Subproject09.Preview
                 GUILayout.Label(ExternalStatus ?? "Waiting for processed motion");
                 GUILayout.BeginHorizontal();
                 if (GUILayout.Button("Pause / Neutral")) PauseExternal?.Invoke();
-                if (GUILayout.Button("Resume boat")) ResumeExternal?.Invoke();
+                if (GUILayout.Button(resumeLabel)) ResumeExternal?.Invoke();
                 GUILayout.EndHorizontal();
                 DrawExternalControls?.Invoke();
-                GUILayout.Label("Source boat (left) → visual IK (right)");
+                GUILayout.Label(sourceDescription);
                 GUILayout.Label("Target offset mm: "+translationMm.ToString("F2"));
             }
             else

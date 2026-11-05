@@ -88,20 +88,26 @@ namespace OceanMotion.Subproject09.Integration
         }
         public static bool TryMap(MotionPoseCommand command,float translationScale,float rotationScale,
             out Vector3 position,out Quaternion rotation,out string error)
+            =>TryMap(command,translationScale,rotationScale,5,out position,out rotation,out error);
+        public static bool TryMap(MotionPoseCommand command,float translationScale,float rotationScale,float rotationAllowanceDegrees,
+            out Vector3 position,out Quaternion rotation,out string error)
         {
             position=Vector3.zero; rotation=Quaternion.identity; error=null;
             if (!command.IsValid || command.SourceSequence==0 || !Finite(command.SourceTimeSeconds))
                 error="Invalid processed source: "+command.LimitFlags;
             else if (!Finite(translationScale) || !Finite(rotationScale) || translationScale<0f || translationScale>MaximumTranslationGain || rotationScale<0f || rotationScale>MaximumRotationGain)
-                error="Invalid visual gains (translation 0..0.1; rotation 0..1.0)";
+                error="Invalid pose gains (translation 0..0.1; rotation 0..1.0)";
+            else if (!Finite(rotationAllowanceDegrees) || rotationAllowanceDegrees<1 || rotationAllowanceDegrees>10)
+                error="Invalid pose angle allowance (1..10 degrees)";
             else if (!Finite(command.TranslationMeters) || !Finite(command.RotationDegrees))
                 error="Nonfinite processed pose";
             if (error!=null) return false;
             position=command.TranslationMeters*translationScale;
             Vector3 angles=command.RotationDegrees*rotationScale;
-            if (Mathf.Max(Mathf.Abs(position.x),Mathf.Abs(position.y),Mathf.Abs(position.z))>.010001f ||
-                Mathf.Max(Mathf.Abs(angles.x),Mathf.Abs(angles.y),Mathf.Abs(angles.z))>5.0001f)
-            { error="Outside visual test envelope (±10 mm / ±5°); entire pose rejected"; return false; }
+            if (Mathf.Max(Mathf.Abs(position.x),Mathf.Abs(position.y),Mathf.Abs(position.z))>.010001f)
+            { error="Translation pose allowance exceeded: requested "+(position*1000).ToString("F2")+"mm; limit ±10mm per axis; whole pose rejected"; return false; }
+            if (Mathf.Max(Mathf.Abs(angles.x),Mathf.Abs(angles.y),Mathf.Abs(angles.z))>rotationAllowanceDegrees+.0001f)
+            { error="Rotation pose allowance exceeded: requested P/Y/R "+angles.ToString("F2")+"°; limit ±"+rotationAllowanceDegrees.ToString("F0")+"° per axis; whole pose rejected"; return false; }
             // SP06 supplies signed, neutral-relative X pitch / Y yaw / Z roll degrees.
             // Quaternion.Euler matches SP06's existing processed-pose display contract.
             rotation=Quaternion.Euler(angles); return true;

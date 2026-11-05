@@ -17,11 +17,34 @@ def axis_quaternion(axis, degrees):
     return tuple(x / length * math.sin(half) for x in axis) + (math.cos(half),)
 
 
+def summarize_report(report):
+    """Keep reviewable metrics; detailed per-leg reconstruction is opt-in."""
+    summary = {key: value for key, value in report.items() if key != "cases"}
+    summary["report_format"] = "summary"
+    summary["cases"] = []
+    for case in report["cases"]:
+        result = case["result"]
+        summary["cases"].append({
+            "case": case["case"], "expected_solution": case["expected_solution"],
+            "solution_found": result["kinematic_solution_found"], "passed": case["passed"],
+            "max_rod_length_residual_mm": max(
+                (leg["rod_length_residual_mm"] for leg in result["legs"]), default=None),
+            "errors": result["errors"]})
+    summary["neutral_reference"] = [
+        {key: row[key] for key in ("channel", "angle_deg_from_reference", "branch")}
+        for row in report["cases"][0]["result"]["legs"]]
+    return summary
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--geometry", type=Path, default=ROOT / "Measurements/offline-geometry.json")
     parser.add_argument("--output-dir", type=Path, default=ROOT / "Reports")
+    parser.add_argument("--full-report", type=Path,
+                        help="Also write detailed per-leg results to this local JSON path")
     args = parser.parse_args()
+    if args.full_report and args.full_report.resolve() == (args.output_dir / "offline-check-report.json").resolve():
+        parser.error("--full-report must differ from the summary report path")
     model, data = load_geometry(args.geometry)
     fixtures = [("neutral", Pose(), True)]
     for name, axis in (("sway_X", (1,0,0)), ("heave_Y", (0,1,0)), ("surge_Z", (0,0,1))):
@@ -75,7 +98,11 @@ def main():
         "unverified_assumptions": data["unverified_assumptions"]
     }
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    (args.output_dir / "offline-check-report.json").write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
+    (args.output_dir / "offline-check-report.json").write_text(
+        json.dumps(summarize_report(report), indent=2, allow_nan=False) + "\n")
+    if args.full_report:
+        args.full_report.parent.mkdir(parents=True, exist_ok=True)
+        args.full_report.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")
     lines = ["# Provisional offline IK — numerical check report", "",
              "**No hardware output. Deferred physical horn-side offsets remain CAD placeholders.**", "",
              f"Geometry SHA-256: `{report['geometry_sha256']}`", "",
