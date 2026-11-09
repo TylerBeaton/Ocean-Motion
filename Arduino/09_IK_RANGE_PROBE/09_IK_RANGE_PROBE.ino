@@ -7,9 +7,9 @@
 
 Adafruit_PWMServoDriver pwm(0x40);
 const int neutralUs[6]={1500,1600,1550,1600,1500,1500};
-const int limit=250;
+const int limit=500;
 int activeLimit=25;
-const int rampStep=1;
+int motionStep=1; // 1..10 us per 20ms = 50..500 us/s; neutral-only ARM configuration.
 const unsigned long tickMs=20,watchdogMs=250;
 bool driverReady=false,ready=false,armed=false,outputsOn=false,homing=false;
 uint32_t session=0,lastSequence=0;
@@ -29,14 +29,14 @@ void off() {
   for (uint8_t i=0;i<6;i++) progress[i]=target[i]=position[i]=0; // Not physical homing.
 }
 void reply(const char* kind) {
-  Serial.print("OI3,"); Serial.print(kind); Serial.print(','); Serial.println(session);
+  Serial.print("OI5,"); Serial.print(kind); Serial.print(','); Serial.println(session);
 }
 void printVector(const int* values) {
   for (uint8_t i=0;i<6;i++) { if (i) Serial.print(','); Serial.print(values[i]); }
 }
 void fault(const char* reason) {
   hold(); ready=false;
-  Serial.print("OI3,ERR,"); Serial.print(session); Serial.print(','); Serial.println(reason);
+  Serial.print("OI5,ERR,"); Serial.print(session); Serial.print(','); Serial.println(reason);
 }
 bool number(const char* s,uint32_t& value) {
   if (!s || !*s) return false;
@@ -56,33 +56,35 @@ bool fraction(const char* s,int& result) {
 }
 void execute(char* message) {
   if (!strcmp(message,"?")) {
-    Serial.print("OI3,STATUS,"); Serial.print(session); Serial.print(",driver_ready="); Serial.print(driverReady);
+    Serial.print("OI5,STATUS,"); Serial.print(session); Serial.print(",driver_ready="); Serial.print(driverReady);
     Serial.print(",armed="); Serial.print(armed); Serial.print(",pwm_on="); Serial.print(outputsOn);
     Serial.print(",progress="); printVector(progress); Serial.print(",target="); printVector(target);
-    Serial.print(",ramp_step="); Serial.print(rampStep); Serial.print(",active_limit_us="); Serial.print(activeLimit); Serial.println(",hard_offset_limit_us=250"); return;
+    Serial.print(",motion_speed_us_per_s="); Serial.print(motionStep*50);
+    Serial.print(",home_speed_us_per_s=50,active_limit_us="); Serial.print(activeLimit); Serial.println(",hard_offset_limit_us=500"); return;
   }
   char* fields[11]; int count=1; fields[0]=message;
   for (char* p=message;*p;p++) if (*p==',') {
     if (count==11) { fault("FIELDS"); return; }
     *p=0; fields[count++]=p+1;
   }
-  if (count<3 || strcmp(fields[0],"OI3")) { fault("FORMAT"); return; }
+  if (count<3 || strcmp(fields[0],"OI5")) { fault("FORMAT"); return; }
   uint32_t token;
   if (!number(fields[2],token) || token==0) { fault("SESSION"); return; }
   if (!strcmp(fields[1],"HELLO") && count==3) {
-    hold(); activeLimit=25; session=token; lastSequence=0; ready=driverReady;
-    if (ready) { Serial.print("OI3,READY,"); Serial.print(session); Serial.print(','); printVector(progress); Serial.println(); } else fault("DRIVER"); return;
+    hold(); activeLimit=25; motionStep=1; session=token; lastSequence=0; ready=driverReady;
+    if (ready) { Serial.print("OI5,READY,"); Serial.print(session); Serial.print(','); printVector(progress); Serial.println(); } else fault("DRIVER"); return;
   }
   if (token==session && !strcmp(fields[1],"HOLD") && count==3) { hold(); reply("HOLD"); return; }
   if (token==session && !strcmp(fields[1],"OFF") && count==3) { off(); reply("OFF"); return; }
   if (!ready || token!=session) { fault("SESSION"); return; }
-  if (!strcmp(fields[1],"ARM") && count==4) {
-    uint32_t requestedLimit;
-    if (!number(fields[3],requestedLimit) || (requestedLimit<25 || requestedLimit>250 || requestedLimit%25!=0)) { fault("LIMIT"); return; }
+  if (!strcmp(fields[1],"ARM") && count==5) {
+    uint32_t requestedLimit,requestedSpeed;
+    if (!number(fields[3],requestedLimit) || (requestedLimit<25 || requestedLimit>500 || requestedLimit%25!=0)) { fault("LIMIT"); return; }
+    if (!number(fields[4],requestedSpeed) || requestedSpeed<50 || requestedSpeed>500 || requestedSpeed%50!=0) { fault("SPEED"); return; }
     if (armed || homing || !neutral()) { fault("NEUTRAL_REQUIRED"); return; }
     if (!outputsOn) for (uint8_t i=0;i<6;i++) pwm.writeMicroseconds(i,neutralUs[i]);
-    activeLimit=requestedLimit; outputsOn=true; armed=true; lastSequence=0; lastPacket=lastTick=millis();
-    Serial.print("OI3,ARMED,"); Serial.print(session); Serial.print(','); Serial.println(activeLimit); return;
+    activeLimit=requestedLimit; motionStep=requestedSpeed/50; outputsOn=true; armed=true; lastSequence=0; lastPacket=lastTick=millis();
+    Serial.print("OI5,ARMED,"); Serial.print(session); Serial.print(','); Serial.print(activeLimit); Serial.print(','); Serial.println(motionStep*50); return;
   }
   if (!strcmp(fields[1],"HOME") && count==3) {
     if (!outputsOn) { fault("OUTPUTS_OFF"); return; }
@@ -93,10 +95,13 @@ void execute(char* message) {
   if (!strcmp(fields[1],"POSE") && count==10) {
     uint32_t seq; int requested[6];
     if (!armed || !number(fields[3],seq) || seq==0 || seq<=lastSequence) { fault("POSE"); return; }
-    for (uint8_t i=0;i<6;i++) if (!fraction(fields[i+4],requested[i]) || abs(requested[i])>activeLimit) { fault("POSE"); return; }
+    for (uint8_t i=0;i<6;i++) {
+      if (!fraction(fields[i+4],requested[i]) || abs(requested[i])>activeLimit) { fault("POSE"); return; }
+      if(neutralUs[i]+requested[i]<1000 || neutralUs[i]+requested[i]>2000) { fault("BOUND");return; }
+    }
     for (uint8_t i=0;i<6;i++) target[i]=requested[i];
     lastSequence=seq; lastPacket=millis();
-    Serial.print("OI3,ACK,"); Serial.print(session); Serial.print(','); Serial.print(seq); Serial.print(',');
+    Serial.print("OI5,ACK,"); Serial.print(session); Serial.print(','); Serial.print(seq); Serial.print(',');
     printVector(progress); Serial.println(); return;
   }
   fault("COMMAND");
@@ -106,13 +111,16 @@ void updateMotion() {
   if ((armed || homing) && now-lastPacket>watchdogMs) { hold(); reply("WATCHDOG"); }
   if ((!armed && !homing) || !outputsOn || now-lastTick<tickMs) return;
   lastTick=now;
+  const int rampStep=homing ? 1 : motionStep;
   double peak=0,nextPosition[6]; int next[6],pulses[6];
   for (uint8_t i=0;i<6;i++) if (fabs(target[i]-position[i])>peak) peak=fabs(target[i]-position[i]);
   double divisor=peak>rampStep ? peak/rampStep : 1;
   // One shared interpolation factor. Fractional state avoids starving smaller components.
   for (uint8_t i=0;i<6;i++) {
     nextPosition[i]=position[i]+(target[i]-position[i])/divisor;
-    next[i]=static_cast<int>(lround(nextPosition[i]));
+    // A consistent tie direction preserves integer-step bounds across zero.
+    // lround(-0.5)->-1 then lround(1.5)->2 can otherwise turn a 2us step into 3us.
+    next[i]=static_cast<int>(floor(nextPosition[i]+0.5));
     if (next[i] < -limit || next[i]>limit || abs(next[i]-progress[i])>rampStep) { fault("RAMP"); return; }
   }
   for (uint8_t i=0;i<6;i++) {
@@ -124,11 +132,11 @@ void updateMotion() {
   if (homing && neutral()) { hold(); reply("NEUTRAL"); }
 }
 void setup() {
-  activeLimit=25; ready=armed=outputsOn=homing=false; session=lastSequence=0; used=0; overflow=false;
+  activeLimit=25; motionStep=1; ready=armed=outputsOn=homing=false; session=lastSequence=0; used=0; overflow=false;
   for (uint8_t i=0;i<6;i++) progress[i]=target[i]=position[i]=0;
   Serial.begin(115200); Wire.begin(); driverReady=pwm.begin(); off();
   if (driverReady) pwm.setPWMFreq(50);
-  Serial.println("OI3,BOOT,0,OUTPUTS_OFF");
+  Serial.println("OI5,BOOT,0,OUTPUTS_OFF");
 }
 void loop() {
   updateMotion();

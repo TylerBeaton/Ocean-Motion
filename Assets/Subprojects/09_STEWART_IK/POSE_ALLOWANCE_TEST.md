@@ -1,5 +1,7 @@
 # Adjustable pose allowance and sweeps to10°
 
+Current receiver update: use OI5 firmware for the current boat/manual scenes (offset allowances to500µs with absolute1000..2000µs bounds). Motion speed is selectable in the boat scene; static/manual sweeps retain50µs/s. Earlier OI3 evidence below remains historical.
+
 User resumed after the shelved perspective investigation and reported gain>0.50 rejected as beyond the visual envelope. They authorized explicit runtime pose bounds, static4°/5° checks, then requested controls through±10° in one update to avoid repeated builds. Servo power off/Unity and Serial Monitor closed was confirmed before preparation. **No Arduino upload required: keep OI3 `09_IK_RANGE_PROBE`.** The firmware±250us cap,1us/20ms ramp and250ms watchdog are unchanged.
 
 ## Boat controls (existing range scene)

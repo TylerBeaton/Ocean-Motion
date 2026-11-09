@@ -41,7 +41,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
             source.cube=cube.transform;source.preview=preview;source.individualIkTest=true;
             source.smallAngleExtent=10;source.smallHeaveExtent=10;source.smallStep=.5f;source.enforceSmallPoseEnvelope=true;
             probe.source=source;probe.extendedTravel=true;probe.serial.enabled=false;
-            probe.gameObject.name="OI3 pose range sweep - USB OFF until Connect";
+            probe.gameObject.name="OI5 pose range sweep - USB OFF until Connect";
             var sweep=probe.gameObject.AddComponent<IkAxisSweep>();sweep.probe=probe;sweep.extendedAngles=true;
             preview.sourceDescription="Manual cube → shared individual IK → six servo pulses";
             preview.outputDescription="Shared static IK target; physical output status is in the right panel";
@@ -54,7 +54,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
             var light=new GameObject("Cube Light").AddComponent<Light>();light.type=LightType.Directional;
             light.transform.rotation=Quaternion.Euler(40,-35,0);
             EditorSceneManager.SaveScene(scene);AssetDatabase.Refresh();
-            Debug.Log("SP09 POSE RANGE SWEEP BUILT: OI3, USB OFF; "+destination);
+            Debug.Log("SP09 POSE RANGE SWEEP BUILT: OI5, USB OFF; "+destination);
         }
         private static void Axis(Transform parent,char axisName,Vector3 axis,Color colour)
         {

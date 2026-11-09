@@ -44,7 +44,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
             waves.SetPreset(OceanMotion.Subproject05.WavePreset.Calm);
             TrimLegacyUi(scene);
             EditorSceneManager.SaveScene(scene);AssetDatabase.Refresh();
-            Debug.Log("SP09 BOAT IK RANGE BUILT: OI3, USB OFF; "+destination);
+            Debug.Log("SP09 BOAT IK RANGE BUILT: OI5, USB OFF; "+destination);
         }
         public static void TrimCurrentScene()
         {

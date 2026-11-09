@@ -25,7 +25,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
                 AssetDatabase.DeleteAsset(sweep);AssetDatabase.DeleteAsset(boat);
             }
             IkPoseRangeChecks.CheckMapping();
-            Debug.Log("SP09 CURRENT SCENES PASS: both retained scenes load and rebuild without retired probes; no missing scripts, OI3, USB OFF.");
+            Debug.Log("SP09 CURRENT SCENES PASS: both retained scenes load and rebuild without retired probes; no missing scripts, OI5, USB OFF.");
         }
         private static void Check(string path,bool manual)
         {
@@ -36,7 +36,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
             BoatIkChecks.Need(missing==0,"Missing scripts in "+path);
             var probes=UnityEngine.Object.FindObjectsByType<IndividualIkSweepProbe>(FindObjectsSortMode.None);
             BoatIkChecks.Need(probes.Length==1,"Expected one physical output component");var p=probes[0];
-            BoatIkChecks.Need(p.extendedTravel && p.serial && !p.serial.enabled && p.Preview && p.Preview.geometry,"OI3/preview/USB gate failed");
+            BoatIkChecks.Need(p.extendedTravel && p.serial && !p.serial.enabled && p.Preview && p.Preview.geometry,"OI5/preview/USB gate failed");
             BoatIkChecks.Need(p.serial.messageListener==p.gameObject && p.serial.baudRate==115200,"Serial callback configuration failed");
             BoatIkChecks.Need(UnityEngine.Object.FindObjectsByType<SerialController>(FindObjectsInactive.Include,FindObjectsSortMode.None).Length==1,"Duplicate serial output");
             if(manual) {

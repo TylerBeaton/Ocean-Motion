@@ -21,6 +21,7 @@ namespace OceanMotion.Subproject09.Preview
         public bool ExternalControl { get; private set; }
         public string ExternalStatus { get; private set; }
         public Action PauseExternal, ResumeExternal, DrawExternalControls;
+        public bool ShowExternalTransportControls { get; set; }=true;
         private bool externalValid;
         private PreviewGeometry data;
         private RotaryStewartModel model;
@@ -197,10 +198,12 @@ namespace OceanMotion.Subproject09.Preview
             if (ExternalControl)
             {
                 GUILayout.Label(ExternalStatus ?? "Waiting for processed motion");
-                GUILayout.BeginHorizontal();
-                if (GUILayout.Button("Pause / Neutral")) PauseExternal?.Invoke();
-                if (GUILayout.Button(resumeLabel)) ResumeExternal?.Invoke();
-                GUILayout.EndHorizontal();
+                if(ShowExternalTransportControls) {
+                    GUILayout.BeginHorizontal();
+                    if (GUILayout.Button("Pause / Neutral")) PauseExternal?.Invoke();
+                    if (GUILayout.Button(resumeLabel)) ResumeExternal?.Invoke();
+                    GUILayout.EndHorizontal();
+                }
                 DrawExternalControls?.Invoke();
                 GUILayout.Label(sourceDescription);
                 GUILayout.Label("Target offset mm: "+translationMm.ToString("F2"));

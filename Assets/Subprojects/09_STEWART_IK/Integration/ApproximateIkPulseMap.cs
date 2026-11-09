@@ -31,7 +31,7 @@ namespace OceanMotion.Subproject09.Integration
         public bool TryOffsets(IkResult result,int limitUs,out int[] offsets,out string error)
         {
             offsets=null; error=null;
-            if(limitUs<25 || limitUs>250 || limitUs%25!=0) { error="Unsupported pulse allowance"; return false; }
+            if(limitUs<25 || limitUs>500 || limitUs%25!=0) { error="Unsupported pulse allowance"; return false; }
             if (result==null || !result.KinematicSolutionFound) { error="No complete IK solution"; return false; }
             var values=new int[6]; var seen=new bool[6];
             foreach (var leg in result.Legs) {
@@ -41,6 +41,10 @@ namespace OceanMotion.Subproject09.Integration
                 double delta=leg.NeutralDeltaDegrees*signedUsPerDegree[i];
                 if (!IkMath.Finite(delta) || Math.Abs(delta)>limitUs) {
                     error="Whole pose rejected: channel "+i+" needs "+delta.ToString("F1")+"us (limit ±"+limitUs+"us)"; return false;
+                }
+                double pulse=NeutralUs[i]+delta;
+                if(pulse<1000 || pulse>2000) {
+                    error="Whole pose rejected: channel "+i+" needs absolute "+pulse.ToString("F1")+"us (bounds 1000..2000us)";return false;
                 }
                 values[i]=(int)Math.Round(delta,MidpointRounding.AwayFromZero);
             }

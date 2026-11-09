@@ -82,12 +82,12 @@ namespace OceanMotion.Subproject09.Integration.Editor
                 double elapsed=EditorApplication.timeSinceStartup-at;
                 if(stage==0 && elapsed>.5) {
                     if(!p.FreshCandidate() && elapsed<3)return;
-                    p.OnConnectionEvent(true);p.OnMessageArrived("OI3,READY,"+Token(p)+",0,0,0,0,0,0");
+                    p.OnConnectionEvent(true);p.OnMessageArrived("OI5,READY,"+Token(p)+",0,0,0,0,0,0");
                     Need(p.SetAllowance(250),"250us config failed");stage=1;at=EditorApplication.timeSinceStartup;
                 }
                 else if(stage==1 && elapsed>.1) {
                     if(!p.FreshCandidate() && elapsed<3)return;
-                    p.Arm();p.OnMessageArrived("OI3,ARMED,"+Token(p)+",250");Need(p.Armed,"Neutral ARM failed");
+                    p.Arm();p.OnMessageArrived("OI5,ARMED,"+Token(p)+",250,50");Need(p.Armed,"Neutral ARM failed");
                     Need(s.StartSweep(false,5),"5deg sweep refused");stage=2;at=EditorApplication.timeSinceStartup;
                 }
                 else if(stage==2) {
@@ -97,12 +97,12 @@ namespace OceanMotion.Subproject09.Integration.Editor
                     Need(p.source.anglesDegrees.y==0 && p.source.anglesDegrees.z==0,"Sweep mixed axes");
                     if(!s.Running) {
                         Need(maximum>4.99f && minimum< -4.99f && p.source.anglesDegrees==Vector3.zero,"Full5deg cycle/neutral failed");
-                        p.OnMessageArrived("OI3,HOMING,"+Token(p));p.OnMessageArrived("OI3,NEUTRAL,"+Token(p));
+                        p.OnMessageArrived("OI5,HOMING,"+Token(p));p.OnMessageArrived("OI5,NEUTRAL,"+Token(p));
                         stage=3;at=EditorApplication.timeSinceStartup;
                     }else Need(elapsed<65,"5deg cycle exceeded timeout");
                 }
                 else if(stage==3 && elapsed>.2) {
-                    p.Arm();p.OnMessageArrived("OI3,ARMED,"+Token(p)+",250");Need(p.Armed,"Rearm failed");
+                    p.Arm();p.OnMessageArrived("OI5,ARMED,"+Token(p)+",250,50");Need(p.Armed,"Rearm failed");
                     var model=PreviewGeometry.Parse(p.Preview.geometry.text).Build();
                     bool fits=IkAxisSweep.ValidatePath(model,250,false,10,10,out _);
                     Need(s.StartSweep(false,10)==fits,"10deg startup disagrees with full path preflight");

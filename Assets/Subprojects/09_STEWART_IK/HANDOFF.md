@@ -1,51 +1,70 @@
 # Ocean Motion — current resume point
 
-Updated2026-11-05 (America/St_Johns). Branch `feature/unity-fusion-telemetry`, this checkpoint packages the retained OI3 integration, current scenes and November5 trim for publication. Use the latest branch commit for the published state.
+Updated 2026-11-09 (America/St_Johns). Branch: `feature/unity-fusion-telemetry`.
 
-## Current setup
+## Current operation
 
-- **Boat:** Ocean Motion → SP09 → Open Boat IK Range Test.
-- **Static/manual:** Ocean Motion → SP09 → Open IK Pose Range Sweep.
-- **Firmware:** Arduino/09_IK_RANGE_PROBE, protocolOI3. Both current scenes start USB disabled. Keep servo supply off for upload; support plate before PWM OFF. Never open USB from agent tests.
-- Same solved target drives coloured linkage view and six independently mapped servo pulses. SP05 physics and SP06 processing remain unchanged. Rotary prototype does not close the final Update08 architecture gate.
-- OI3 pulse offsets25..250us in25us steps, neutral/disarmed only, matching ARM echo. Physical saved neutrals `[1500,1600,1550,1600,1500,1500]us`; pulse-to-angle estimate11us/degree. Raw dataset `Measurements/provisional-physical-geometry.json` uses estimated−5mm axial offset,35mm radius,184.5mm rods and neutral top-centreZ181.4mm. Branch/zero/height/calibration remain provisional.
-- Rotation gain0..1; heave gain0..0.02; shared pose allowance1..10° per axis(default/reset5°), translation±10mm. Gains/limits only change at disarmed board neutral. Entire invalid pose HOLDs; never clip individual channels or silently scale it.
-- Firmware moves1us/20ms(50us/s max),250ms watchdog; explicit rearm. Home timeout7s covers max5s neutral return. Candidate/board offsets are target/ramped commands, not sensors.
+- Boat: **Ocean Motion → SP09 → Open Boat IK Range Test**.
+- Static/manual: **Ocean Motion → SP09 → Open IK Pose Range Sweep**.
+- Receiver: `Arduino/09_IK_RANGE_PROBE/09_IK_RANGE_PROBE.ino`, protocol **OI5**. Older OI3/OI4 receivers need one updated upload, with servo supply off and plate supported. No upload is needed between runtime settings.
+- Workflow: Connect → choose next-test settings → Prepare → wait for Prepared → Arm → wave preset → timed/manual **Stop test + save**. Draft edits never change active commands. Arm requires fresh source/board neutral and matching applied settings, pulse allowance and speed acknowledgements.
+- Prepare cross-fades to Calm, resumes the source, requests gradual neutral if needed, waits for the fade plus three seconds of settling and board neutral, applies settings, calibrates once and waits for fresh exact neutral. It never arms or starts a wave automatically.
+- Stop saves an immediate stop marker, pauses the source and requests gradual neutral. PWM remains on. Wait for neutral; support the plate before PWM OFF and switching servo supply off.
 
-## Latest physical observations
+## Controls and guards
 
-User qualitatively accepted static pitch and roll sweeps through±8° at250us;±9° was rejected, consistent with the provisional command map. No measured angle accuracy, load/current envelope or complete mixed workspace was established.
-
-Latest reported boat gain0.68 works well for Bow and Side, but Crossed drops out. **Next diagnostic:** obtain the exact Last stop/rejection. Combined pitch+roll can exceed pulse/pose bounds even when each separate axis fits. Do not assume a power fault or automatically expand the cap. Previous advice was to return neutral/disarmed and tryCrossed0.60, then0.55 if needed, at unchanged limits. Verify current heave gain, pose allowance and selected pulse cap from the panel before continuing.
-
-The earlier repeated0.45 stop was explicitly identified as channel1 needing100.2us with100usallowed;0.40 worked. A separate serial `Device not configured` warning occurred with no established cause. Supply reported5V/3A,~0.3A display, estimated6Amaximum(not confirmed); no confirmedCC/voltage-sag event. Run in Background already1. Separate USB failures, focus/frame watchdogs, pose guard and pulse-limit HOLDs.
-
-## Deferred visual/centering investigation
-
-User initially perceived Bow as dipping then merely leveling in both physical and coloured views. Screenshots at+4.01° and−4.20° showed all six candidate offsets reversing signs, ARMED at200us/rotation0.50/heave0.002, with board lag up to30us. Oblique-camera projection gives near-edge screen angles approximately1.3°,4.9°neutral,8.6°opposite pose. This supports a perspective explanation for the visual appearance, not proof of physical centering. Neutral-outline overlay and side-view camera remain proposed, not implemented. Do not recenter from screen-horizontal alignment or change ramp blindly.
-
-## Command-space estimates (not physical validation)
-
-| Single-axis amplitude | Pitch peakus | Roll peakus |
+| Setting | Available values | New-Play default |
 | --- | --- | --- |
-| ±4° | 110.2 | 105.3 |
-| ±5° | 139.6 | 132.9 |
-| ±6° | 169.8 | 161.3 |
-| ±7° | 201.0 | 190.4 |
-| ±8° | 233.4 | 220.4 |
-| ±9° | 267.2 | 251.5 |
-| ±10° | 302.6 | 283.8 |
+| Pulse-offset allowance | ±25–500µs, increments25 | Draft200; connection resets active25 |
+| Pose-angle allowance | ±1–10° per axis | Draft8; connection resets active5 |
+| Rotation gain | 0–1 | Draft0.40 |
+| Heave gain | 0–0.02 | Draft0.002 |
+| Motion speed | 50–500µs/s, increments50 | 50 |
+| Wave transition | 1/2/3 seconds | 2 |
+| Test duration | 1–3600 seconds;0 means manual | 60 |
 
-Controls reach10° but pulse/IK checks can refuse the path before movement. Static one-shot sweeps are0.5°/s with2s commanded-settled dwells, return neutral and disarm. User wants autonomous, concise testing without per-degree builds or repeated chat rounds.
+Saved neutrals, channels0–5: `[1500,1600,1550,1600,1500,1500]µs`. Absolute1000–2000µs checks remain independent of offset allowance, on host mapping before rounding, whole firmware packets and output ticks. Channels1/3 therefore allow at most+400µs and channel2+450µs, even when500 is selected. Reject whole invalid poses; never clip individual channels or silently increase limits.
 
-## Cleanup and verification
+HOME always uses50µs/s, can take10s from500µs, and has12s host timeout. HELLO retains held offsets while resetting selected allowance25/speed50. A250ms watchdog HOLD requires explicit rearm. Firmware uses a shared fractional ramp and consistent half-tie rounding to prevent a false RAMP fault on direction reversal across zero.
 
-On2026-11-05 user requested keeping latest work and discarding superseded local probes. Retain the two scenes above, five current runtime adapters, current setup/check scripts, current reports, provisional geometry/materials and OI3 firmware with self-contained test stubs. Original committed numerical/visual/SP07/SP08 archives are preserved. Temporary verification scenes are deleted by CurrentSceneChecks; no change to accepted runtime settings or existing scene GUIDs.
+Timed motion begins at the first non-Calm selection after Arm, includes its transition and stops on the first Unity update at/after the deadline. Faults/manual stops cancel the timer; recovery never restarts or arms it. Wave phase and boat physics are not reset.
 
-Current builders regenerate directly from the committed visual foundation/current boat scene, not retired probes. Reports remain software-only evidence. Cleanup verification passed: self-contained firmware host tests; both scenes loaded and rebuilt as temporary copies with no missing scripts; boat Play checks and full simulated±5°static cycle passed. No hardware USB was opened. Recovery archive for removed local work: `/private/tmp/ocean-motion-sp09-before-cleanup-2026-11-05.tar.gz` (temporary storage, not a permanent project dependency).
+## Latest physical evidence
 
-See README, BOAT_IK_RANGE_TEST.md and POSE_ALLOWANCE_TEST.md for current operation. Earlier Nov4 Notion checkpoint captures the perspective investigation; subsequent pose allowance,±8°acceptance and Crossed0.68 issue are newer. Notion has not been updated for the November5 cleanup; the user requested a commit/push after the final trim.
+All observations below are commanded PWM tracking and user inspection, not measured platform angles or a general collision-free workspace.
 
-## Final trim and publication — November5
+- At rotation0.50/heave0.002, increasing motion speed50→100µs/s greatly reduced sustained command lag: Crossed median largest six-channel error fell from about70µs to6µs. Wave phases/windows differ; this is observational evidence, not a controlled physical-accuracy measurement.
+- November6: Bow/Side completed60s at rotation0.75/heave0.0125/speed150, with500µs/8° allowances. Crossed completed60s at rotation0.60/heave0.0102/speed150. Higher-gain Crossed requests hit the angle guard.
+- November9 before transitions: Side at rotation0.85/heave0.0125/speed150/500µs/9° stopped after0.345s, requesting−9.08°roll.
+- After the2s source transition: mixed-preset runs at0.85 and0.90 completed30s. Rotation0.95 completed one60s run containing Bow/Side/Crossed and transitions, at heave0.0125/speed150/500µs/9°. Sampled pitch±8.04°, roll up to±8.62°, peak requested offset382µs and median largest command error12µs. No recorded serial errors. This is not three independent full60s tests.
+- Rotation1.00 stopped after18.01s in Side, requesting−9.01°roll against9° allowance; the transition had already completed. It was an angle-bound HOLD, not a speed or serial failure.
+- For filming, repeat0.90 for greater margin, or repeat0.95 across several complete runs before choosing it. A0.95 roll peak leaves only about0.38° observed margin to9°.
 
-Removed the inactive SP05 telemetry canvas and SP06 comparison subtree from the current boat scene after verifying no retained component referenced them. Retained object/component payloads and scene GUID are unchanged; only removed UI and the scene-root list differ. Current scene builder applies the same trim. Boat YAML4579→1729lines. Offline report2233→185lines; default generation now summarizes fixtures, neutral references and continuity. `--full-report /tmp/ocean-ik-full-report.json` recreates detailed output exactly; generated full report matched the previous JSON. Original measurement datasets, parity fixtures and committed visual/milestone archives remain.
+## Transition design and telemetry
+
+The current boat opts into a linear cross-fade of complete sampled wave fields. Rendering and buoyancy share the same field and simulation clock. Retargeting snapshots the current blend; repeated same-destination clicks do not restart it. Merged travelling-wave components prevent an accumulating blend chain; sampling avoids per-vertex transition arrays. The existing immediate `WaveField.SetPreset(preset)` contract remains for archived scenes; optional duration/explicit-clock overloads support current transitions and deterministic tests/replay. No downstream filtering, physics damping or actuator-limit changes were introduced.
+
+Ignored local `TestLogs/Stewart/` contains a startup/session file and separate timestamped `run-NNN` file per acknowledged Arm. Five-Hz JSON lines record settings, mapped pose, candidate/acknowledged offsets, source validity, faults and transition state. Start/stop events flush immediately; files continue through neutral return until the next Arm. Compare `motionElapsedSeconds` from the motion-start marker to the first test-stop marker, excluding setup/neutral return. Logs include selected duration, speed and wave transition duration/progress. Automated files have `batchMode=true` and must be excluded from physical analysis. Output caps50MiB/file; files are never automatically deleted. A crash can lose the last buffered second.
+
+Graphs/source snapshots are local under `TestLogs/Stewart/plots/`; they are intentionally not committed. Notion's latest saved checkpoint remains November4 and needs reconciliation with these newer observations.
+
+## Verification
+
+No automated check opens hardware USB.
+
+- SP05 EditMode sampling/transition suite:13/13 passed, including all preset pairs,1/2/3s linearity, phase preservation, interrupted/1000 rapid selections, repeated destination clicks and invalid inputs.
+- Archived SP07 baseline and boat Play checks passed: source/pulse/absolute bounds, OI5 echo/profile locks, preparation, transition completion before calibration, timer/stop logging, stale-source HOLD and no automatic rearm. The1s timed check stopped at about1.003s.
+- Manual full simulated±5° sweep,10° preflight gate, handle bounds and recovery passed.
+- Firmware host tests passed all200 combinations of20 pulse allowances and10 speeds, absolute endpoints/refusals, retained500µs HOME, malformed packets, sessions, watchdog and fractional reversal regression.
+- UNO R4 WiFi firmware build:67156bytes flash/9476bytes RAM.
+- Reports committed with the earlier OI3 baseline are historical snapshots; current executable checks cover the newer controls above.
+
+## Remaining work and preserved history
+
+Geometry/pulse calibration remains provisional:35mm horn radius,184.5mm rods, estimated−5mm axial offset, top-centreZ181.4mm and11µs/degree. Actual angular zero, per-servo pulse calibration, joint/collision workspace and physical tracking accuracy remain open. The rotary prototype does not close Update08's final architecture decision gate.
+
+Earlier apparent one-sided tilt had an oblique-camera perspective explanation, without establishing physical centering. A fixed neutral outline and side camera remain useful proposed follow-ups. Earlier100.2µs/100µs stops were pulse-limit HOLDs, not proven power faults; a separate historical USB exception has no established cause. Do not infer supply failure from a pose/pulse rejection.
+
+Numerical single-axis pitch/roll peak offsets:4°≈110/105µs;5°≈140/133;6°≈170/161;7°≈201/190;8°≈233/220;9°≈267/252;10°≈303/284. These are command-space estimates. Separate static±8° observations do not validate arbitrary combined poses.
+
+Published numerical/visual and SP07/SP08 archives remain intact. November5 cleanup removed superseded local probes and inactive UI, retained current scene GUIDs, trimmed boat YAML4579→1729lines and generated report2233→185lines. Detailed offline output remains available through `validate_ik.py --full-report /tmp/ocean-ik-full-report.json`. Current builders rebuild from the committed visual/current boat foundation; they do not depend on retired probes. See README and BOAT_IK_RANGE_TEST for operating details.

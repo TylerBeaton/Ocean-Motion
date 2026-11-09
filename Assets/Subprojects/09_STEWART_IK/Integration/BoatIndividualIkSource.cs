@@ -22,6 +22,10 @@ namespace OceanMotion.Subproject09.Integration
         public float PoseAngleAllowance { get; private set; }=5;
         public string SourceStatus { get; private set; }="Waiting for calibrated boat";
         public float MaximumRotationGain=>probe && probe.IsExtended ? 1f : .45f;
+        public void SelectWavePreset(WavePreset preset)
+        {
+            if(waves)waves.SetPreset(preset,probe && probe.IsExtended ? probe.WaveTransitionSeconds : 0);
+        }
         private ulong sequence;
         private double sourceTime,freshAt;
         private bool observed;
@@ -42,6 +46,7 @@ namespace OceanMotion.Subproject09.Integration
         {
             observed=false;
             if(preview) {
+                preview.ShowExternalTransportControls=!(probe && probe.extendedTravel);
                 preview.PauseExternal=PauseAtNeutral; preview.ResumeExternal=Resume;
                 preview.DrawExternalControls=DrawControls;
                 preview.RejectExternalPose("Waiting for fresh calibrated boat motion");
@@ -89,7 +94,8 @@ namespace OceanMotion.Subproject09.Integration
         private void DrawControls()
         {
             GUILayout.Label(SourceStatus);
-            bool before=GUI.enabled; GUI.enabled=before && (!probe || probe.CanConfigure);
+            if(!probe || !probe.IsExtended) {
+            bool before=GUI.enabled; GUI.enabled=before && (!probe || (probe.CanConfigure && !probe.Preparing));
             if(GUILayout.Button("Calibrate boat neutral (Calm, after settling)"))CalibrateBoat();
             GUILayout.Label("Shared pose allowance: ±"+PoseAngleAllowance.ToString("F0")+"° per axis / ±10mm");
             if(probe && probe.IsExtended) {
@@ -116,16 +122,19 @@ namespace OceanMotion.Subproject09.Integration
                 GUILayout.EndHorizontal();
             }
             GUI.enabled=before;
+            } else GUILayout.Label("Choose next-test settings on the right → Prepare → Arm. Stop test saves and returns to neutral.");
             GUILayout.BeginHorizontal();
             foreach(WavePreset preset in System.Enum.GetValues(typeof(WavePreset)))
-                if(GUILayout.Button(preset.ToString()) && waves)waves.SetPreset(preset);
+                if(GUILayout.Button(preset.ToString()) && waves)SelectWavePreset(preset);
             GUILayout.EndHorizontal();
             GUILayout.Label("Waves: "+(waves ? waves.ActivePresetName : "missing")+". Gains/calibration require disarmed board neutral.");
+            if(waves && waves.IsTransitioning)GUILayout.Label("Wave transition: "+(waves.TransitionProgress*100).ToString("F0")+"%");
         }
         private void OnDisable()
         {
             LatestCommand=default; observed=false;
             if(preview) {
+                preview.ShowExternalTransportControls=true;
                 preview.PauseExternal=null; preview.ResumeExternal=null; preview.DrawExternalControls=null;
                 preview.RejectExternalPose("Boat IK source disabled");
             }
