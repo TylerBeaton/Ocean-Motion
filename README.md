@@ -24,7 +24,9 @@ AI output is treated as a recommendation or hypothesis—not as proof that somet
 
 ## Milestone roadmap
 
-A checked milestone has been completed. Detailed tasks, test results, design notes, and publication status are maintained privately in Notion.
+A checked milestone has completed the prototype demonstration described below. Unchecked items marked **In progress** already have working components, with the remaining validation or deliverable stated explicitly. Detailed tasks, test results, design notes, and publication status are maintained privately in Notion.
+
+**Current checkpoint — November 9, 2026:** processed Unity boat motion drives the rotary Stewart prototype through six independent IK commands. Timed hardware trials, per-run telemetry, selectable motion limits/speeds, and smooth wave-preset transitions are working. Measured physical pose accuracy, the final actuator architecture decision, and the full usable workspace remain open. See the [current SP09 handoff](Assets/Subprojects/09_STEWART_IK/HANDOFF.md) for evidence and operating limits.
 
 - [x] **01 — Unity talks to Arduino**
   Establish a reliable Unity-to-Arduino serial connection and send a changing value.
@@ -47,32 +49,32 @@ A checked milestone has been completed. Detailed tasks, test results, design not
 - [x] **06b - Design the Stewart Platform with CAD software**
   Use CAD software to design the prototype giving attention to part measurements and positioning of parts and simulate it.
 
-- [ ] **07 — First mechanical linkage**
-  Test one representative actuator, driver, joint, and linkage under a realistic mechanical load.
+- [x] **07 — First mechanical linkage**
+  Built and exercised the servo, crank, joints, and pushrod linkages in the assembled rotary prototype. Representative payload/load characterization continues under Milestone 13.
 
-- [ ] **08 — Design the Stewart platform**
-  Define the platform requirements and select a candidate rotary-servo or linear-actuator architecture.
+- [x] **08 — Design the Stewart platform**
+  Designed and assembled the six-servo rotary prototype, recording geometry, neutral references, directions, and bench pulse-range observations. This completes the prototype design experiment; the final rotary-servo versus feedback-linear-actuator architecture decision remains open.
 
-- [ ] **09 — Solve inverse kinematics**
-  Calculate the six required leg lengths or servo angles and validate the mechanism throughout its usable workspace.
+- [x] **09 — Solve inverse kinematics**
+  Implemented and tested analytical Python/C# rotary IK, coordinate conversion, branch continuity, visual previews, and live six-servo commands. Measured pulse-to-angle calibration and full physical-workspace validation continue under Milestone 13.
 
-- [ ] **10 — Coordinated platform movement**
-  Coordinate all six physical channels to produce controlled, unloaded platform movement.
+- [x] **10 — Coordinated platform movement**
+  Demonstrated coordinated, unloaded six-servo movement, bounded manual poses/sweeps, gradual neutral return, and explicit HOLD/PWM-off controls. These trials establish the prototype proof; general workspace and final safety acceptance continue below.
 
-- [ ] **11 — Boat drives the platform**
-  Connect the Unity boat simulation to the physical platform through the complete motion pipeline.
+- [x] **11 — Boat drives the platform**
+  Processed Unity boat motion now drives the physical platform through the same six independent IK solutions shown in the preview. Bow, Side, Crossed, and preset transitions have been exercised with timed trials and recorded command telemetry.
 
 - [ ] **12 — Filter and scale the ride**
-  Tune motion scaling and filtering so the physical result remains useful and within the platform’s limits.
+  **In progress:** runtime rotation/heave gains, bounded command speeds, and 1–3 second source-wave transitions are working; telemetry shows reduced command-tracking lag. Repeatable demo settings and final response tuning remain under evaluation.
 
 - [ ] **13 — Calibration, limits and safety**
-  Finalize homing, calibration, travel limits, fault handling, and emergency-stop behaviour.
+  **In progress:** neutral references, whole-pose rejection, absolute pulse bounds, watchdog HOLD, session/sequence checks, and manual rearming are implemented. Final measured calibration, joint/collision limits, power/load characterization, and physical fault/emergency-stop acceptance remain open.
 
 - [ ] **14 — Integrated boat-motion demo**
-  Demonstrate the complete Unity-to-hardware system operating as one functional platform.
+  **In progress:** the integrated Unity-to-hardware bench demonstration works. Select and repeat the filming configuration, capture synchronized simulation/platform footage, and publish the finished demo video.
 
 - [ ] **15 — What worked and what didn’t**
-  Document the results, failures, latency, cost, design trade-offs, and priorities for a second version.
+  **In progress:** test logs, tracking plots, fault diagnoses, and iteration notes are being collected. Complete the final results, latency/cost review, design trade-offs, and priorities for a second version.
 
 ## Project organization
 
