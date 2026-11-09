@@ -1,0 +1,185 @@
+{
+  "title": "Provisional offline rotary IK mathematical checks",
+  "hardware_output_enabled": false,
+  "mechanical_workspace_validated": false,
+  "geometry_sha256": "6587aeade7f692b0a26cae4a8d3748bfa9bbb73cf817e76001627be6a882880f",
+  "passed": true,
+  "case_count": 15,
+  "continuity_path": {
+    "requested_samples": 181,
+    "passed": true,
+    "max_angle_step_deg": 0.16569194502374662,
+    "max_rod_length_residual_mm": 5.684341886080802e-14,
+    "errors": []
+  },
+  "unverified_assumptions": [
+    "Horn ball joints mount on the other side in hardware; current axial offsets are explicitly deferred CAD placeholders, not automatically negated physical offsets.",
+    "Neutral height is rough; horizontal origin, yaw and level are assumed from the reported model/control frame.",
+    "35mm radius and184.5mm rods provisionally apply to all six; matching/tolerances unmeasured.",
+    "Initial solution branch is closest to each CAD radial reference at provisional neutral, not physically confirmed.",
+    "Pulse-to-angle calibration and actual joint-angle limits are missing;1000..2000us cannot be converted to angle bounds yet.",
+    "Collision, ball-joint articulation, full-platform Jacobian singularities, payload and supply capacity are not validated."
+  ],
+  "report_format": "summary",
+  "cases": [
+    {
+      "case": "neutral",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 0.0,
+      "errors": []
+    },
+    {
+      "case": "Unity_sway_X_-1mm",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_sway_X_+1mm",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_heave_Y_-1mm",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_heave_Y_+1mm",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_surge_Z_-1mm",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_surge_Z_+1mm",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_pitch_X_-1deg",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_pitch_X_+1deg",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_yaw_Y_-1deg",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_yaw_Y_+1deg",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_roll_Z_-1deg",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_roll_Z_+1deg",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "Unity_small_combined_pose",
+      "expected_solution": true,
+      "solution_found": true,
+      "passed": true,
+      "max_rod_length_residual_mm": 2.842170943040401e-14,
+      "errors": []
+    },
+    {
+      "case": "reject_1m_heave",
+      "expected_solution": false,
+      "solution_found": false,
+      "passed": true,
+      "max_rod_length_residual_mm": null,
+      "errors": [
+        "Channel 0: rod sphere does not intersect horn circle",
+        "Channel 1: rod sphere does not intersect horn circle",
+        "Channel 2: rod sphere does not intersect horn circle",
+        "Channel 3: rod sphere does not intersect horn circle",
+        "Channel 4: rod sphere does not intersect horn circle",
+        "Channel 5: rod sphere does not intersect horn circle"
+      ]
+    }
+  ],
+  "neutral_reference": [
+    {
+      "channel": 0,
+      "angle_deg_from_reference": -2.34261665096089,
+      "branch": -1
+    },
+    {
+      "channel": 1,
+      "angle_deg_from_reference": 1.2445720461737904,
+      "branch": 1
+    },
+    {
+      "channel": 2,
+      "angle_deg_from_reference": -2.4145784529685552,
+      "branch": -1
+    },
+    {
+      "channel": 3,
+      "angle_deg_from_reference": 1.3127408983280415,
+      "branch": 1
+    },
+    {
+      "channel": 4,
+      "angle_deg_from_reference": -2.3196472568599416,
+      "branch": -1
+    },
+    {
+      "channel": 5,
+      "angle_deg_from_reference": 1.3447030513477922,
+      "branch": 1
+    }
+  ]
+}

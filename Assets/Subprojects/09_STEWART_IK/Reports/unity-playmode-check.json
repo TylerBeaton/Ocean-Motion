@@ -1,0 +1,8 @@
+{
+  "passed": true,
+  "neutral_heave_pitch": true,
+  "unreachable_hides_linkages": true,
+  "neutral_recovery": true,
+  "scene_target_and_root_transform": true,
+  "hardware_output_enabled": false
+}

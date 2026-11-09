@@ -1,0 +1,1 @@
+{"name":"OceanMotion.Subproject09.Editor","references":["OceanMotion.Subproject09.Core","OceanMotion.Subproject09.Preview"],"includePlatforms":["Editor"],"autoReferenced":true}

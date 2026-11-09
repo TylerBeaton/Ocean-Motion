@@ -1,0 +1,75 @@
+{
+  "dataset_status": "user_reported_common_lengths_pending_uniformity_and_horn_joint_geometry_confirmation",
+  "ready_for_hardware_output": false,
+  "recorded_date": "2026-11-02",
+  "source": "User replied to request for actual shaft-centre-to-horn-joint radius and pushrod joint-centre-to-joint-centre length",
+  "length_units": "mm",
+  "reported_horn_radius_mm": 35.0,
+  "reported_pushrod_length_mm": 184.5,
+  "common_to_all_six": "working assumption from single reported pair of values; per-servo matching/tolerances not explicitly confirmed",
+  "measurement_uncertainty_mm": null,
+  "basic_pose_compatibility": [
+    {
+      "channel": 0,
+      "derived_CAD_axial_offset_mm": 6.84979132762,
+      "possible_distance_from_offset_horn_circle_to_top_joint_mm": [
+        155.457733194,
+        220.847218952
+      ],
+      "reported_rod_length_intersects_offset_horn_circle": true
+    },
+    {
+      "channel": 1,
+      "derived_CAD_axial_offset_mm": 6.850030702338,
+      "possible_distance_from_offset_horn_circle_to_top_joint_mm": [
+        156.541357681,
+        221.613657
+      ],
+      "reported_rod_length_intersects_offset_horn_circle": true
+    },
+    {
+      "channel": 2,
+      "derived_CAD_axial_offset_mm": 6.851100065706,
+      "possible_distance_from_offset_horn_circle_to_top_joint_mm": [
+        155.380445879,
+        220.792752368
+      ],
+      "reported_rod_length_intersects_offset_horn_circle": true
+    },
+    {
+      "channel": 3,
+      "derived_CAD_axial_offset_mm": 6.850360709588,
+      "possible_distance_from_offset_horn_circle_to_top_joint_mm": [
+        156.461816731,
+        221.557506271
+      ],
+      "reported_rod_length_intersects_offset_horn_circle": true
+    },
+    {
+      "channel": 4,
+      "derived_CAD_axial_offset_mm": 6.85,
+      "possible_distance_from_offset_horn_circle_to_top_joint_mm": [
+        155.42032225,
+        220.822043637
+      ],
+      "reported_rod_length_intersects_offset_horn_circle": true
+    },
+    {
+      "channel": 5,
+      "derived_CAD_axial_offset_mm": 6.85,
+      "possible_distance_from_offset_horn_circle_to_top_joint_mm": [
+        156.495933187,
+        221.580350608
+      ],
+      "reported_rod_length_intersects_offset_horn_circle": true
+    }
+  ],
+  "limitations": [
+    "Circle/sphere compatibility uses actual reported35 mm radius and184.5 mm rods, with horn circle centres offset from P along each shaft using reported CAD H data.",
+    "Compatibility does not select a horn solution, calibrate zero/pulses, or validate collisions, joint articulation, load or workspace.",
+    "Reported CAD H-to-T lengths192.593..193.180 mm differ from actual184.5 mm rods. CAD horn pose cannot be assumed to represent physical horn angles at neutral pulses.",
+    "User confirmed intended physical neutral corresponds to CAD top pose; actual neutral height/orientation and physical horn geometry still need reconciliation."
+  ],
+  "fusion_pose_matches_physical_calibrated_neutral_user_confirmed": true,
+  "basic_pose_compatibility_status": "provisional_includes_axial_offsets_derived_from_CAD_H_points; physical_offsets_and_neutral_horn_angles_unconfirmed"
+}

@@ -20,6 +20,7 @@
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
+/TestLogs/
 
 # Imported DCC source files kept local; Unity-generated metadata must stay local too.
 *.blend1

@@ -1,0 +1,16 @@
+{
+    "passed": true,
+    "hardware_output_enabled": false,
+    "invalid_source_hidden": true,
+    "stale_source_hidden": true,
+    "recovery_passed": true,
+    "pause_neutral_passed": true,
+    "editor_version": "6000.5.7f1",
+    "simulation_seconds": 20.744714736938478,
+    "translation_gain": 0.019999999552965165,
+    "rotation_gain": 0.44999998807907107,
+    "maximum_heave_mm": 5.0,
+    "maximum_rotation_degrees": 4.0954084396362309,
+    "accepted_frames": 2927,
+    "rejected_frames": 0
+}

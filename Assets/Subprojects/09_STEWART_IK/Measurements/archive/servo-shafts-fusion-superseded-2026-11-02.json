@@ -1,0 +1,69 @@
+{
+  "dataset_status": "on_hold_possible_crank_linkage_feature_confusion_remeasurement_required",
+  "ready_for_hardware_output": false,
+  "recorded_date": "2026-11-02",
+  "source": "User-reported Fusion P/Q measurements in chat",
+  "position_units": "mm",
+  "frame": {
+    "name": "reported_fusion_frame",
+    "vertical_axis_reported": "Z",
+    "origin_definition": null,
+    "common_global_frame_explicitly_confirmed": false,
+    "fusion_to_unity_conversion_applied": false
+  },
+  "point_definitions": {
+    "p": "Intended output-shaft centre at horn mounting plane",
+    "q": "Second point along the shaft centreline",
+    "axis_p_to_q": "Unit vector (q-p)/norm(q-p), dimensionless; not a horn raise sign"
+  },
+  "servos": [
+    {
+      "channel": 0,
+      "p_mm": [-113.537, -41.049, 15.008],
+      "q_mm": [-124.319, -47.274, 15.008],
+      "pq_length_mm": 12.449985904,
+      "axis_p_to_q": [-0.866025077, -0.500000566, 0.0]
+    },
+    {
+      "channel": 1,
+      "p_mm": [-94.59, -78.866, 15.428],
+      "q_mm": [-105.372, -85.091, 15.428],
+      "pq_length_mm": 12.449985904,
+      "axis_p_to_q": [-0.866025077, -0.500000566, 0.0]
+    },
+    {
+      "channel": 2,
+      "p_mm": [92.317, -77.802, 14.977],
+      "q_mm": [103.099, -84.027, 14.977],
+      "pq_length_mm": 12.449985904,
+      "axis_p_to_q": [0.866025077, -0.500000566, 0.0]
+    },
+    {
+      "channel": 3,
+      "p_mm": [115.595, -42.484, 15.395],
+      "q_mm": [126.377, -48.709, 15.395],
+      "pq_length_mm": 12.449985904,
+      "axis_p_to_q": [0.866025077, -0.500000566, 0.0]
+    },
+    {
+      "channel": 4,
+      "p_mm": [21.22, 118.85, 14.992],
+      "q_mm": [21.22, 131.30, 14.992],
+      "pq_length_mm": 12.45,
+      "axis_p_to_q": [0.0, 1.0, 0.0]
+    },
+    {
+      "channel": 5,
+      "p_mm": [-21.005, 121.35, 15.412],
+      "q_mm": [-21.005, 133.80, 15.412],
+      "pq_length_mm": 12.45,
+      "axis_p_to_q": [0.0, 1.0, 0.0]
+    }
+  ],
+  "unresolved_observations": [
+    "After submitting these points, the user recognized confusion between the servo output-shaft axis and the crank-to-linkage connection axis. Do not use these points as servo pivots until remeasured or explicitly confirmed on the correct output-shaft feature. Raw values are preserved only for provenance.",
+    "User notes small Z differences in a posed Fusion assembly; real mounting geometry versus CAD displacement is unconfirmed.",
+    "Z offsets for channels 1-0, 3-2 and 5-4 are 0.420, 0.418 and 0.420 mm. Raw values are preserved without flattening.",
+    "Horn reference orientation, actual horn/rod lengths, top joint coordinates, neutral pose and angle-to-pulse calibration are not yet provided."
+  ]
+}

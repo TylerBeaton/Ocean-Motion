@@ -1,0 +1,204 @@
+{
+  "schema_version": 1,
+  "status": "PROVISIONAL_SMALL_PHYSICAL_IK_TEST_NOT_MEASURED_CALIBRATION",
+  "length_units": "mm",
+  "coordinate_frame": "fusion_z_up",
+  "hardware_output_enabled": false,
+  "source_measurements": [
+    "servo-shafts-fusion.json",
+    "top-joints-fusion.json",
+    "horn-joints-fusion.json",
+    "physical-link-lengths.json",
+    "physical-neutral-pose.json"
+  ],
+  "unverified_assumptions": [
+    "Axial offset -5mm estimated from 3mm horn plus 7mm ball; assumes shaft reference P lies at horn midplane. Actual P reference and mounting remain unverified.",
+    "Pulse mapping assumes 11us/degree and maps mathematical neutral angles to observed neutral pulses. Physical angular zero and branch not measured.",
+    "Neutral plate height, radius, rods and other geometry retain earlier provisional assumptions.",
+    "Not a validated workspace. Initial physical commands limited to +/-25us around saved neutrals."
+  ],
+  "neutral_pose": {
+    "position_mm": [
+      0.0,
+      0.0,
+      181.4
+    ],
+    "rotation_xyzw": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "definition": "Fusion-aligned CONTROL frame at neutral, not the CAD component's local transform"
+  },
+  "legs": [
+    {
+      "channel": 0,
+      "shaft_point_mm": [
+        -125.097,
+        -7.325,
+        16.0
+      ],
+      "shaft_axis": [
+        -0.86603905187,
+        -0.499976360077,
+        0.0
+      ],
+      "axial_offset_mm": -5.0,
+      "axial_offset_status": "ESTIMATE_INWARD_FROM_ASSUMED_HORN_MIDPLANE",
+      "reference_radial_direction": [
+        0.499775500854,
+        -0.865691131559,
+        -0.028342785433
+      ],
+      "top_local_mm": [
+        -75.937,
+        25.794,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 1,
+      "shaft_point_mm": [
+        -71.16,
+        -105.747,
+        16.0
+      ],
+      "shaft_axis": [
+        -0.866019052629,
+        -0.500011000363,
+        0.0
+      ],
+      "axial_offset_mm": -5.0,
+      "axial_offset_status": "ESTIMATE_INWARD_FROM_ASSUMED_HORN_MIDPLANE",
+      "reference_radial_direction": [
+        -0.499944219863,
+        0.865903388803,
+        -0.01634314182
+      ],
+      "top_local_mm": [
+        -15.582,
+        -78.747,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 2,
+      "shaft_point_mm": [
+        68.892,
+        -104.675,
+        16.0
+      ],
+      "shaft_axis": [
+        0.86603905187,
+        -0.499976360077,
+        0.0
+      ],
+      "axial_offset_mm": -5.0,
+      "axial_offset_status": "ESTIMATE_INWARD_FROM_ASSUMED_HORN_MIDPLANE",
+      "reference_radial_direction": [
+        0.499762746796,
+        0.865669039489,
+        -0.029228598738
+      ],
+      "top_local_mm": [
+        15.792,
+        -78.747,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 3,
+      "shaft_point_mm": [
+        127.16,
+        -8.753,
+        16.0
+      ],
+      "shaft_axis": [
+        0.866019052629,
+        -0.500011000363,
+        0.0
+      ],
+      "axial_offset_mm": -5.0,
+      "axial_offset_status": "ESTIMATE_INWARD_FROM_ASSUMED_HORN_MIDPLANE",
+      "reference_radial_direction": [
+        -0.499936292218,
+        -0.865889658121,
+        -0.017285938869
+      ],
+      "top_local_mm": [
+        76.149,
+        25.792,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 4,
+      "shaft_point_mm": [
+        56.205,
+        112.0,
+        16.0
+      ],
+      "shaft_axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "axial_offset_mm": -5.0,
+      "axial_offset_status": "ESTIMATE_INWARD_FROM_ASSUMED_HORN_MIDPLANE",
+      "reference_radial_direction": [
+        -0.99958518255,
+        0.0,
+        -0.028800396284
+      ],
+      "top_local_mm": [
+        60.462,
+        52.963,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    },
+    {
+      "channel": 5,
+      "shaft_point_mm": [
+        -56.0,
+        114.5,
+        16.0
+      ],
+      "shaft_axis": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "axial_offset_mm": -5.0,
+      "axial_offset_status": "ESTIMATE_INWARD_FROM_ASSUMED_HORN_MIDPLANE",
+      "reference_radial_direction": [
+        0.999858869554,
+        0.0,
+        -0.016800029013
+      ],
+      "top_local_mm": [
+        -60.25,
+        52.964,
+        0.0
+      ],
+      "horn_radius_mm": 35.0,
+      "rod_length_mm": 184.5,
+      "angle_limits_deg": null
+    }
+  ]
+}

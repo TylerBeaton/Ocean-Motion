@@ -1,0 +1,126 @@
+{
+  "dataset_status": "rough_physical_neutral_estimate_pending_horn_side_geometry_and_angle_calibration",
+  "ready_for_hardware_output": false,
+  "recorded_date": "2026-11-02",
+  "length_units": "mm",
+  "source": "User replied roughly165.4mm to requested vertical separation from shaft-centre plane to top-ball-joint-centre plane while at recorded neutral",
+  "measured_top_joint_plane_above_shaft_plane_mm": 165.4,
+  "measurement_quality": "rough user measurement; uncertainty not quantified",
+  "reference_shaft_plane_global_z_mm": 16.0,
+  "CAD_top_control_origin_global_mm": [
+    0.0,
+    0.0,
+    191.712
+  ],
+  "provisional_physical_top_control_origin_global_mm": [
+    0.0,
+    0.0,
+    181.4
+  ],
+  "vertical_correction_from_CAD_mm": -10.312,
+  "neutral_control_rotation_quaternion_xyzw": [
+    0,
+    0,
+    0,
+    1
+  ],
+  "pose_assumptions": [
+    "Preserve CAD horizontal top-origin position and yaw; these have not been separately measured on hardware.",
+    "Use a level top-joint plane and Fusion-aligned CONTROL frame at neutral; actual orientation/tilt not independently instrumented.",
+    "Reuse reported fixed shaft geometry,35mm horn radius and184.5mm rods; physical horn axial offsets are currently inferred from CAD H data."
+  ],
+  "reference_pulse_us_by_channel": [
+    1500,
+    1600,
+    1550,
+    1600,
+    1500,
+    1500
+  ],
+  "provisional_neutral_top_joints": [
+    {
+      "channel": 0,
+      "t_local_mm": [
+        -75.937,
+        25.794,
+        0.0
+      ],
+      "t_global_estimate_mm": [
+        -75.937,
+        25.794,
+        181.4
+      ]
+    },
+    {
+      "channel": 1,
+      "t_local_mm": [
+        -15.582,
+        -78.747,
+        0.0
+      ],
+      "t_global_estimate_mm": [
+        -15.582,
+        -78.747,
+        181.4
+      ]
+    },
+    {
+      "channel": 2,
+      "t_local_mm": [
+        15.792,
+        -78.747,
+        0.0
+      ],
+      "t_global_estimate_mm": [
+        15.792,
+        -78.747,
+        181.4
+      ]
+    },
+    {
+      "channel": 3,
+      "t_local_mm": [
+        76.149,
+        25.792,
+        0.0
+      ],
+      "t_global_estimate_mm": [
+        76.149,
+        25.792,
+        181.4
+      ]
+    },
+    {
+      "channel": 4,
+      "t_local_mm": [
+        60.462,
+        52.963,
+        0.0
+      ],
+      "t_global_estimate_mm": [
+        60.462,
+        52.963,
+        181.4
+      ]
+    },
+    {
+      "channel": 5,
+      "t_local_mm": [
+        -60.25,
+        52.964,
+        0.0
+      ],
+      "t_global_estimate_mm": [
+        -60.25,
+        52.964,
+        181.4
+      ]
+    }
+  ],
+  "limitations": [
+    "Derived181.4mm globalZ is conditional on the CAD shaft datum16mm matching the physical base coordinate convention;165.4mm plane separation is the direct measurement.",
+    "This corrects the earlier visual confirmation that CAD top pose matches physical neutral; retain raw CAD coordinates rather than changing them.",
+    "No servo-angle/pulse mapping, accepted IK solution branch, collision workspace or output commands are established."
+  ],
+  "topology_warning": "User clarified provided T0..T5 already identify final attachment locations for channels0..5. No top remapping needed; opposite-side physical horn mounting offset remains deferred."
+}

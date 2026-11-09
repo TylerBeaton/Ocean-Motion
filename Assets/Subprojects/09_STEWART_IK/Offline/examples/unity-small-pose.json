@@ -1,0 +1,5 @@
+{
+  "description": "Offline neutral-relative Unity pose: +1mm heave, identity rotation. No hardware output.",
+  "position_m": [0.0, 0.001, 0.0],
+  "rotation_xyzw": [0.0, 0.0, 0.0, 1.0]
+}
