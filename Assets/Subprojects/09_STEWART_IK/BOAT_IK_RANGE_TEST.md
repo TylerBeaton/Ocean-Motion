@@ -21,6 +21,7 @@ Open **Ocean Motion → SP09 → Open Boat IK Range Test**. This current scene s
 | Rotation gain | 0–1, increments0.01 | 0.40 |
 | Heave gain | 0–0.02, increments0.0001 | 0.002 |
 | Movement speed | 50–500µs/s, increments50 | 50µs/s |
+| Water speed | 0–4×, increments0.25 | 1× |
 | Wave transition | 1/2/3s | 2s |
 | Test duration | 1–3600s, decimals accepted;0/manual | 60s |
 
@@ -31,6 +32,10 @@ Saved neutrals0–5:1500,1600,1550,1600,1500,1500µs. Absolute1000–2000µs bou
 Motion uses a shared fractional ramp,1–10µs/20ms. HOME always uses1µs/20ms(50µs/s), can take10s from500µs and has12s host timeout. A250ms watchdog HOLD requires manual recovery/rearm. HELLO retains the actual command vector while resetting selected guards. OFF is not mechanical homing. HOLD retains commanded PWM; it is not supply removal.
 
 ## Source transitions and timing
+
+Water speed is separate from servo speed. Choose a quarter-step multiplier, then Prepare to apply it in Calm at board neutral. The active multiplier is shown beside the wave presets; next-test edits never alter a running field. At0× wave travel freezes, while boat physics, source transitions and the wall-clock test timer continue. At1× the original waves are unchanged. Higher multipliers advance the wave-travel clock faster without changing amplitudes, wavelengths, Time.timeScale, fixed timestep or actuator limits. Rate changes preserve phase. Rendering and buoyancy share the mapped wave time, while preset transitions keep their normal simulation-time duration.
+
+For tracking comparisons keep gains, allowances, transition duration and servo speed fixed; vary water speed initially1.00→1.25→1.50×. Faster forcing can change boat dynamics as well as requested command speed. Inspect raw/source behaviour and distinguish pose/pulse HOLDs from tracking lag. Speed0 is a frozen surface, not a flat-water reset. New telemetry fields `waterSpeedMultiplier` and `waveTimeSeconds` identify the active rate and source travel clock; the existing motion clock still aligns graph windows.
 
 Preset buttons linearly blend old/new sampled wave surfaces on the simulation clock. Rendering and buoyancy share the same field. Retargeting mid-transition is continuous; repeated clicks on the same in-progress destination do not restart it. Frequencies, phases, physics damping and SP06 processing remain unchanged. Existing immediate `WaveField.SetPreset(preset)` behaviour is retained for archived scenes; duration/explicit-clock overloads are opt-in. Direct component/Inspector edits remain immediate.
 

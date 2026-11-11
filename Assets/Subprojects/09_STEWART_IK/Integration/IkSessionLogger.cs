@@ -19,7 +19,7 @@ namespace OceanMotion.Subproject09.Integration
         {
             public string utc, reason, scene, status, lastStop, mappingError, sourceStatus, flags, waves;
             public double elapsedSeconds, sourceTimeSeconds,testDurationSeconds,motionElapsedSeconds;
-            public float frameSeconds, heaveGain, rotationGain, poseAllowanceDegrees,waveTransitionProgress;
+            public float frameSeconds, heaveGain, rotationGain, poseAllowanceDegrees,waveTransitionProgress,waterSpeedMultiplier,waveTimeSeconds;
             public bool focused, ready, armed, sourceValid, batchMode,motionStarted,timerRunning,waveTransitioning;
             public int pulseAllowanceUs,run,movementSpeedUsPerSecond,neutralReturnSpeedUsPerSecond,waveTransitionSeconds;
             public ulong sourceSequence;
@@ -87,6 +87,8 @@ namespace OceanMotion.Subproject09.Integration
                     waveTransitionSeconds=boat ? probe.WaveTransitionSeconds : 0,
                     waveTransitionProgress=boat && boat.waves ? boat.waves.TransitionProgress : 1,
                     waveTransitioning=boat && boat.waves && boat.waves.IsTransitioning,
+                    waterSpeedMultiplier=boat && boat.waves ? boat.waves.SpeedMultiplier : 1,
+                    waveTimeSeconds=boat && boat.waves ? boat.waves.WaveTimeAt(Time.time) : 0,
                     status=probe.Status,lastStop=probe.LastStop,mappingError=probe.MappingError,
                     run=runNumber,movementSpeedUsPerSecond=probe.MovementSpeedUsPerSecond,neutralReturnSpeedUsPerSecond=50,
                     pulseAllowanceUs=probe.AllowanceUs,heaveGain=boat ? boat.TranslationGain : 0,

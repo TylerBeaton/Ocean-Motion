@@ -47,6 +47,13 @@ namespace OceanMotion.Subproject09.Integration
         public int NextMovementSpeedUsPerSecond { get; private set; }=50;
         public int NextWaveTransitionSeconds { get; private set; }=2;
         public int WaveTransitionSeconds { get; private set; }=2;
+        public float NextWaterSpeedMultiplier { get; private set; }=1;
+        public float WaterSpeedMultiplier=>boatSource && boatSource.waves ? boatSource.waves.SpeedMultiplier : 1;
+        public bool SetNextWaterSpeed(float value)
+        {
+            if(Preparing || !WaveField.IsSupportedSpeedMultiplier(value))return false;
+            NextWaterSpeedMultiplier=value;return true;
+        }
         public bool SetNextWaveTransition(int seconds)
         {
             if(Preparing || seconds<1 || seconds>3)return false;
@@ -121,6 +128,7 @@ namespace OceanMotion.Subproject09.Integration
                 if(!SetAllowance(NextPulseAllowanceUs) || !boatSource.SetPoseAllowance(NextPoseAllowanceDegrees) || !boatSource.SetGains(NextHeaveGain,NextRotationGain)) {
                     Hold("Preparation settings unavailable");return;
                 }
+                boatSource.waves.SetSpeedMultiplier(NextWaterSpeedMultiplier);
                 boatSource.CalibrateBoat();preparationCalibrated=true;preparationAt=Now+.5;
                 MovementSpeedUsPerSecond=NextMovementSpeedUsPerSecond;
                 Status="Preparing: calibrated Calm; waiting for fresh exact neutral";return;
@@ -226,7 +234,7 @@ namespace OceanMotion.Subproject09.Integration
             if(Preparing)return;
             if(boatSource && !DurationInputValid) { Status="Enter a valid test duration before Arm";return; }
             if(boatSource && IsExtended && (AllowanceUs!=NextPulseAllowanceUs || boatSource.PoseAngleAllowance!=NextPoseAllowanceDegrees ||
-                Mathf.Abs(boatSource.RotationGain-NextRotationGain)>.00001f || Mathf.Abs(boatSource.TranslationGain-NextHeaveGain)>.00001f || MovementSpeedUsPerSecond!=NextMovementSpeedUsPerSecond || WaveTransitionSeconds!=NextWaveTransitionSeconds)) {
+                Mathf.Abs(boatSource.RotationGain-NextRotationGain)>.00001f || Mathf.Abs(boatSource.TranslationGain-NextHeaveGain)>.00001f || MovementSpeedUsPerSecond!=NextMovementSpeedUsPerSecond || WaveTransitionSeconds!=NextWaveTransitionSeconds || Mathf.Abs(WaterSpeedMultiplier-NextWaterSpeedMultiplier)>.00001f)) {
                 Status="Settings changed: click Prepare test before Arm";return;
             }
             if(!Ready || Armed || pendingArm || pendingHome || homing || !Zero(BoardOffsets) || !FreshCandidate() || !Zero(CandidateOffsets))
@@ -324,6 +332,10 @@ namespace OceanMotion.Subproject09.Integration
                 if(index!=NextMovementSpeedUsPerSecond/50-1) { SetNextMovementSpeed((index+1)*50);speedDropdown=false; }
             }
             GUILayout.Label("Neutral return: fixed 50 µs/s. Speed ceiling is provisional.");
+            GUILayout.Label("Water speed: "+NextWaterSpeedMultiplier.ToString("F2")+"×");
+            float waterSpeed=Mathf.Round(GUILayout.HorizontalSlider(NextWaterSpeedMultiplier,0,4)*4)/4;
+            if(waterSpeed!=NextWaterSpeedMultiplier)SetNextWaterSpeed(waterSpeed);
+            GUILayout.Label("0× freezes wave travel; physics and transitions continue.");
             GUILayout.Label("Wave transition: "+NextWaveTransitionSeconds+" seconds");
             int transition=GUILayout.Toolbar(NextWaveTransitionSeconds-1,new[]{"1s","2s","3s"})+1;
             if(transition!=NextWaveTransitionSeconds)SetNextWaveTransition(transition);
