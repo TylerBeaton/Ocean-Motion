@@ -16,6 +16,14 @@ namespace OceanMotion.Subproject09.Integration.Editor
     public static class BoatIkRangeChecks
     {
         private const string Key="SP09.BoatIkRangeCheck";
+        private const string WaterSpeedKey=Key+".CharacterizeWaterSpeed";
+        [Serializable] private sealed class RawMotionMetrics
+        {
+            public float waterSpeedMultiplier=4,peakPitchDegrees,peakRollDegrees,peakHeaveMeters,peakSpeedMetersPerSecond;
+            public int totalSeconds=90;
+            public bool usbOpened=false;
+        }
+        private static RawMotionMetrics rawMetrics;
         private static int stage,frames,peak,rejected;
         private static bool failed;
         private static string firstRunFile;
@@ -33,8 +41,11 @@ namespace OceanMotion.Subproject09.Integration.Editor
         private static void Log(string s,string trace,LogType t){if(t==LogType.Error || t==LogType.Exception)failed=true;}
         private static void Need(bool c,string why)=>BoatIkChecks.Need(c,why);
         private static uint Token(IndividualIkSweepProbe p)=>(uint)typeof(IndividualIkSweepProbe).GetField("token",Flags).GetValue(p);
-        public static void Run()
+        public static void Run()=>Begin(false);
+        public static void RunWaterSpeedChecks()=>Begin(true);
+        private static void Begin(bool characterizeWaterSpeed)
         {
+            SessionState.SetBool(WaterSpeedKey,characterizeWaterSpeed);rawMetrics=new RawMotionMetrics();
             if(!File.Exists(BoatIkRangeSetup.ScenePath))BoatIkRangeSetup.Create();else EditorSceneManager.OpenScene(BoatIkRangeSetup.ScenePath);
             var p=UnityEngine.Object.FindFirstObjectByType<IndividualIkSweepProbe>();
             Need(p && p.extendedTravel && p.boatSource && !p.serial.enabled,"Range scene configuration failed");
@@ -84,7 +95,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
                 else if(stage==2 && elapsed>.1) {
                     if(!p.FreshCandidate() && elapsed<3)return;
                     p.Arm();Need(!p.Armed && p.Status.StartsWith("Settings changed:"),"Unprepared draft mismatch was not blocked");
-                    Need(p.SetPreparationSettings(200,5,.45f,.002f) && p.SetNextMovementSpeed(50),"Draft settings failed");
+                    Need(p.SetPreparationSettings(200,5,.45f,.002f) && p.SetNextMovementSpeed(50) && p.SetNextWaterSpeed(1),"Draft settings failed");
                     p.Arm();p.OnMessageArrived("OI5,ARMED,"+Token(p)+",100,50");Need(!p.Armed,"Mismatched allowance armed");
                     p.OnMessageArrived("OI5,ARMED,"+Token(p)+",200,100");Need(!p.Armed,"Mismatched speed armed");
                     p.OnMessageArrived("OI5,ARMED,"+Token(p)+",200,50");Need(p.Armed,"200us arm failed: "+p.Status);
@@ -123,6 +134,9 @@ namespace OceanMotion.Subproject09.Integration.Editor
                     p.Disconnect();Need(b.PoseAngleAllowance==5,"Reconnect profile did not reset pose allowance");
                     p.OnConnectionEvent(true);p.OnMessageArrived("OI5,READY,"+Token(p)+",0,0,0,0,0,0");
                     Need(p.SetPreparationSettings(500,6,.35f,.0015f),"Expanded draft unavailable");
+                    for(int step=0;step<=16;step++)Need(p.SetNextWaterSpeed(step*.25f),"Water speed selection failed");
+                    Need(!p.SetNextWaterSpeed(-.25f) && !p.SetNextWaterSpeed(4.25f) && !p.SetNextWaterSpeed(1.1f) && !p.SetNextWaterSpeed(float.NaN),"Invalid water speed accepted");
+                    Need(p.WaterSpeedMultiplier==1,"Draft water speed altered the active field");
                     for(int seconds=1;seconds<=3;seconds++)Need(p.SetNextWaveTransition(seconds),"Transition selection failed");
                     Need(!p.SetNextWaveTransition(0) && !p.SetNextWaveTransition(4),"Invalid transition selection accepted");
                     Need(p.SetPreparationSettings(175,6,.35f,.0015f),"Custom draft failed");
@@ -136,6 +150,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
                     Need(!p.SetPreparationSettings(200,8,.4f,.002f),"Draft changed during preparation");
                     Need(!p.SetNextMovementSpeed(500),"Speed changed during preparation");
                     Need(!p.SetNextWaveTransition(1),"Transition changed during preparation");
+                    Need(!p.SetNextWaterSpeed(1),"Water speed changed during preparation");
                     Need(!p.SetTestDuration("2"),"Duration changed during preparation");
                     p.Arm();Need(!p.Armed,"Arm allowed during preparation");
                     stage=8;at=EditorApplication.timeSinceStartup;
@@ -147,6 +162,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
                     Need(p.AllowanceUs==175 && b.PoseAngleAllowance==6 && Math.Abs(b.RotationGain-.35f)<.001f && Math.Abs(b.TranslationGain-.0015f)<.00001f && !b.paused,"Custom preparation settings failed");
                     Need(p.MovementSpeedUsPerSecond==150,"Prepared speed not applied");
                     Need(p.WaveTransitionSeconds==3 && !b.waves.IsTransitioning,"Preparation did not wait for Calm transition");
+                    Need(p.WaterSpeedMultiplier==4,"Prepared water speed not applied");
                     p.Arm();p.OnMessageArrived("OI5,ARMED,"+Token(p)+",175,50");Need(!p.Armed,"Wrong speed echo armed custom run");
                     p.OnMessageArrived("OI5,ARMED,"+Token(p)+",175,150");Need(p.Armed,"Prepared custom run did not arm");
                     var logger=p.GetComponent<IkSessionLogger>();
@@ -164,6 +180,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
                     Need(File.ReadAllText(logger.FilePath).Contains("\"movementSpeedUsPerSecond\":150"),"Speed missing from telemetry");
                     Need(File.ReadAllText(logger.FilePath).Contains("\"waveTransitionSeconds\":3") &&
                         File.ReadAllText(logger.FilePath).Contains("\"waveTransitioning\":true"),"Transition missing from telemetry");
+                    Need(File.ReadAllText(logger.FilePath).Contains("\"waterSpeedMultiplier\":4"),"Water speed missing from telemetry");
                     p.OnMessageArrived("OI5,HOMING,"+Token(p));p.OnMessageArrived("OI5,NEUTRAL,"+Token(p));
                     stoppedMotionElapsed=p.MotionElapsedSeconds;b.Resume();stage=10;at=EditorApplication.timeSinceStartup;
                 }
@@ -173,12 +190,36 @@ namespace OceanMotion.Subproject09.Integration.Editor
                     p.PrepareBoatTest();p.Hold("Preparation cancellation test");Need(!p.Preparing,"HOLD failed to cancel preparation");
                     p.PrepareBoatTest();p.Disconnect();Need(!p.Preparing && !p.Armed && p.AllowanceUs==25 && p.MovementSpeedUsPerSecond==50,"Disconnect failed to cancel/reset");
                     Need(frames>100 && peak>20 && peak<=200,"Insufficient wave coverage");
+                    if(SessionState.GetBool(WaterSpeedKey,false)) {
+                        rawMetrics=new RawMotionMetrics();b.Resume();b.SelectWavePreset(WavePreset.Bow);
+                        stage=11;at=EditorApplication.timeSinceStartup;return;
+                    }
                     File.WriteAllText(PreviewChecks.Root+"Reports/boat-ik-range-check.json","{\n  \"software_checks_passed\": true,\n  \"usb_opened\": false,\n  \"physical_expanded_range_test_completed\": false,\n  \"wave_gain_checked\": 0.45,\n  \"heave_gain\": 0.002,\n  \"allowance_checked_us\": 200,\n  \"maximum_selectable_us\": 250,\n  \"rejected_frames\": "+rejected+",\n  \"mapped_frames\": "+frames+",\n  \"peak_offset_us\": "+peak+"\n}\n");
                     Debug.Log("SP09 RANGE PLAY PASS: 0.45 Bow/Side/Crossed, 200us allowance, shared IK, source/pulse rejection HOLD, range/echo/profile locks; NO USB OPENED. Peak="+peak+" rejectedFrames="+rejected);Finish(0);
+                }
+                else if(stage>=11 && stage<=13) {
+                    Need(!p.Armed && !p.serial.enabled,"Raw characterization opened hardware output");
+                    var t=b.telemetry;
+                    Need(!float.IsNaN(t.Pitch+t.Roll+t.Heave+t.Speed) && !float.IsInfinity(t.Pitch+t.Roll+t.Heave+t.Speed) &&
+                        Mathf.Abs(t.Pitch)<45 && Mathf.Abs(t.Roll)<45 && Mathf.Abs(t.Heave)<3 && t.Speed<10,
+                        "4x source physics exceeded raw stability characterization bounds");
+                    rawMetrics.peakPitchDegrees=Mathf.Max(rawMetrics.peakPitchDegrees,Mathf.Abs(t.Pitch));
+                    rawMetrics.peakRollDegrees=Mathf.Max(rawMetrics.peakRollDegrees,Mathf.Abs(t.Roll));
+                    rawMetrics.peakHeaveMeters=Mathf.Max(rawMetrics.peakHeaveMeters,Mathf.Abs(t.Heave));
+                    rawMetrics.peakSpeedMetersPerSecond=Mathf.Max(rawMetrics.peakSpeedMetersPerSecond,t.Speed);
+                    if(elapsed<(stage==13 ? 60 : 15))return;
+                    if(stage<13) {
+                        b.SelectWavePreset(stage==11 ? WavePreset.Side : WavePreset.Crossed);
+                        stage++;at=EditorApplication.timeSinceStartup;return;
+                    }
+                    string path=Path.Combine(Path.GetTempPath(),"ocean-water-speed-characterization.json");
+                    File.WriteAllText(path,JsonUtility.ToJson(rawMetrics,true));
+                    Debug.Log("SP09 WATER SPEED PLAY PASS: existing guards, quarter-step controls, preparation, telemetry and 4x raw Bow/Side/Crossed characterization (15/15/60s); NO USB OPENED. Report: "+path);
+                    Finish(0);
                 }
             }catch(Exception ex){Debug.LogException(ex);Finish(1);}
         }
         private static void Finish(int code)
-        {Time.timeScale=1;SessionState.SetBool(Key,false);EditorApplication.update-=Tick;Application.logMessageReceived-=Log;EditorApplication.Exit(code);}
+        {Time.timeScale=1;SessionState.SetBool(Key,false);SessionState.SetBool(WaterSpeedKey,false);EditorApplication.update-=Tick;Application.logMessageReceived-=Log;EditorApplication.Exit(code);}
     }
 }

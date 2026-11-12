@@ -128,6 +128,7 @@ namespace OceanMotion.Subproject09.Integration
                 if(GUILayout.Button(preset.ToString()) && waves)SelectWavePreset(preset);
             GUILayout.EndHorizontal();
             GUILayout.Label("Waves: "+(waves ? waves.ActivePresetName : "missing")+". Gains/calibration require disarmed board neutral.");
+            if(waves)GUILayout.Label("Active water speed: "+waves.SpeedMultiplier.ToString("F2")+"×");
             if(waves && waves.IsTransitioning)GUILayout.Label("Wave transition: "+(waves.TransitionProgress*100).ToString("F0")+"%");
         }
         private void OnDisable()

@@ -146,3 +146,9 @@ Edit Mode tests in `Tests/EditMode/WaveSamplerTests.cs` cover:
 - Visible mesh vertices matching `WaveField` at identical world XZ and time inputs
 
 Manual Play-mode stability and motion-axis checks remain required.
+
+## Optional phase-continuous water-speed control
+
+`WaveField.SetSpeedMultiplier(value)` accepts0..4 in0.25 steps, default1. An explicit simulation-time overload supports deterministic tests/replay. An anchored wave-travel clock preserves surface phase when rates change; `WaveTimeAt(simulationTime)` exposes that clock. The same sampler serves rendering and buoyancy. Amplitudes/wavelengths are unchanged, and global time scale/physics timestep are untouched. At0, travel freezes while buoyancy and source-preset fades can continue. Transitions use ordinary simulation time, so their duration does not stretch with water speed. Existing callers at default1 retain their earlier sampling behaviour.
+
+The SP09 current boat panel opts into this API through its next-test/Prepare controls and records rate/clock telemetry. This source feature does not change downstream gains, servo speeds, pose bounds or pulse limits. Test raw source stability before sending new high-frequency conditions to hardware.

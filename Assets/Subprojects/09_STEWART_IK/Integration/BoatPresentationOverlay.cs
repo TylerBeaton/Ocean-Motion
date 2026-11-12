@@ -104,7 +104,7 @@ namespace OceanMotion.Subproject09.Integration
                 GUILayout.Label($"Yaw {t.Yaw:F1}°    Heave {t.Heave:F2} m");
             }
             else GUILayout.Label("Awaiting neutral calibration");
-            GUILayout.Label($"{boat.waves.ActivePresetName}  •  {probe.Status}");
+            GUILayout.Label($"{boat.waves.ActivePresetName} · {probe.WaterSpeedMultiplier:F2}×  •  {probe.Status}");
             if (!string.IsNullOrEmpty(probe.LastStop)) GUILayout.Label(probe.LastStop);
             if (!string.IsNullOrEmpty(probe.MappingError)) GUILayout.Label(probe.MappingError);
             GUILayout.EndScrollView();

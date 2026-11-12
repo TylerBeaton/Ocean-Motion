@@ -15,6 +15,22 @@ namespace OceanMotion.Subproject05
     public class WaveField : MonoBehaviour
     {
         public const float MaximumTransitionSeconds=30f;
+        public const float MaximumSpeedMultiplier=4f,SpeedMultiplierStep=.25f;
+        private float speedMultiplier=1,waveTimeAnchor,simulationTimeAnchor;
+        public float SpeedMultiplier=>speedMultiplier;
+        // Integrate travel time around an anchor instead of multiplying absolute simulation time.
+        // Changing speed preserves phase for both buoyancy and rendering, including at zero speed.
+        public float WaveTimeAt(float simulationTime)=>waveTimeAnchor+(simulationTime-simulationTimeAnchor)*speedMultiplier;
+        public static bool IsSupportedSpeedMultiplier(float value)=>!float.IsNaN(value) && !float.IsInfinity(value) &&
+            value>=0 && value<=MaximumSpeedMultiplier && Mathf.Abs(value/SpeedMultiplierStep-Mathf.Round(value/SpeedMultiplierStep))<.00001f;
+        public void SetSpeedMultiplier(float value)=>SetSpeedMultiplier(value,Time.time);
+        public void SetSpeedMultiplier(float value,float simulationTime)
+        {
+            if(!IsSupportedSpeedMultiplier(value))throw new ArgumentOutOfRangeException(nameof(value));
+            if(float.IsNaN(simulationTime) || float.IsInfinity(simulationTime) || simulationTime<0)throw new ArgumentOutOfRangeException(nameof(simulationTime));
+            if(value==speedMultiplier)return;
+            waveTimeAnchor=WaveTimeAt(simulationTime);simulationTimeAnchor=simulationTime;speedMultiplier=value;
+        }
         private WaveComponent[] transitionFrom;
         private float transitionStartedAt,transitionDuration;
         public float TransitionDurationSeconds=>transitionDuration;
@@ -102,17 +118,18 @@ namespace OceanMotion.Subproject05
         public float SampleHeight(Vector3 worldPosition, float simulationTime)
         {
             float baseHeight = transform.position.y + baseHeightOffset;
+            float waveTime=WaveTimeAt(simulationTime);
 
             float target=WaveSampler.SampleHeight(
                 new Vector2(worldPosition.x, worldPosition.z),
-                simulationTime,
+                waveTime,
                 baseHeight,
                 primaryWave,
                 secondaryWave
             );
             float blend=TransitionProgressAt(simulationTime);
             if(transitionFrom==null || blend>=1)return target;
-            float previous=WaveSampler.SampleHeight(new Vector2(worldPosition.x,worldPosition.z),simulationTime,baseHeight,transitionFrom);
+            float previous=WaveSampler.SampleHeight(new Vector2(worldPosition.x,worldPosition.z),waveTime,baseHeight,transitionFrom);
             return Mathf.Lerp(previous,target,blend);
         }
 

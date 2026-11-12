@@ -1,25 +1,30 @@
 # Ocean Motion — current resume point
 
-Updated 2026-11-09 (America/St_Johns). Branch: `feature/unity-fusion-telemetry`.
+Updated 2026-11-12 (America/St_Johns). The SP09 presentation overlay and water-speed control are integrated on main.
 
 ## Current operation
 
 - Boat: **Ocean Motion → SP09 → Open Boat IK Range Test**.
 - Static/manual: **Ocean Motion → SP09 → Open IK Pose Range Sweep**.
 - Receiver: `Arduino/09_IK_RANGE_PROBE/09_IK_RANGE_PROBE.ino`, protocol **OI5**. Older OI3/OI4 receivers need one updated upload, with servo supply off and plate supported. No upload is needed between runtime settings.
-- Workflow: Connect → choose next-test settings → Prepare → wait for Prepared → Arm → wave preset → timed/manual **Stop test + save**. Draft edits never change active commands. Arm requires fresh source/board neutral and matching applied settings, pulse allowance and speed acknowledgements.
+- Recorded test workflow: Connect → choose next-test settings → Prepare → wait for Prepared → Arm → wave preset → timed/manual **Stop test + save**. Draft edits never change active commands. Arm requires fresh source/board neutral and matching applied settings, pulse allowance and speed acknowledgements.
 - Prepare cross-fades to Calm, resumes the source, requests gradual neutral if needed, waits for the fade plus three seconds of settling and board neutral, applies settings, calibrates once and waits for fresh exact neutral. It never arms or starts a wave automatically.
 - Stop saves an immediate stop marker, pauses the source and requests gradual neutral. PWM remains on. Wait for neutral; support the plate before PWM OFF and switching servo supply off.
 
 ## Controls and guards
 
+Water-speed feature: next-test multiplier0..4× by0.25 (draft default 2×), applied in Calm by Prepare and checked before Arm. An anchored travel clock preserves phase on rate changes; both buoyancy/rendering use it. Water amplitudes, wavelengths, physics timestep and global time scale are unchanged. At0× wave travel freezes while boat physics, transitions and wall-clock timing continue. Telemetry adds waterSpeedMultiplier/waveTimeSeconds; the local plot helper labels water/servo speeds separately. No firmware upload is needed. Change only water speed between comparison runs, initially1.00→1.25→1.50×.
+
+Verification:18/18 SP05 sampling/transition/speed EditMode tests passed. USB-disabled preparation, all17 rate selections, invalid/locked/unapplied-setting guards, timed stopping and rate telemetry passed. Optional `BoatIkRangeChecks.RunWaterSpeedChecks` also characterized raw4× Bow/Side/Crossed for15/15/60s; observed raw peaks≈8.78°pitch,9.41°roll,0.889m heave and1.97m/s speed, with no finite/bounds failures. This is a limited software characterization, not physical high-speed acceptance. Local summary: ignored `TestLogs/Stewart/characterization/water-speed-4x-2026-11-09.json`.
+
 | Setting | Available values | New-Play default |
 | --- | --- | --- |
-| Pulse-offset allowance | ±25–500µs, increments25 | Draft200; connection resets active25 |
-| Pose-angle allowance | ±1–10° per axis | Draft8; connection resets active5 |
-| Rotation gain | 0–1 | Draft0.40 |
-| Heave gain | 0–0.02 | Draft0.002 |
-| Motion speed | 50–500µs/s, increments50 | 50 |
+| Pulse-offset allowance | ±25–500µs, increments25 | Draft500; connection resets active25 |
+| Pose-angle allowance | ±1–10° per axis | Draft10; connection resets active5 |
+| Rotation gain | 0–1 | Draft0.90 |
+| Heave gain | 0–0.02 | Draft0.0125 |
+| Motion speed | 50–500µs/s, increments50 | Draft 500 |
+| Water speed | 0–4×, increments0.25 | 2× |
 | Wave transition | 1/2/3 seconds | 2 |
 | Test duration | 1–3600 seconds;0 means manual | 60 |
 
