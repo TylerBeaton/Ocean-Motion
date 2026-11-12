@@ -41,6 +41,10 @@ namespace OceanMotion.Subproject09.Integration.Editor
             serial.maxUnreadMessages=64;serial.messageListener=output;
             var probe=output.AddComponent<IndividualIkSweepProbe>();
             probe.extendedTravel=true;probe.serial=serial;probe.boatSource=source;source.probe=probe;
+            Camera.main.rect=new Rect(0,0,1,1);
+            Camera.main.fieldOfView=63;
+            preview.viewCamera.orthographicSize=.145f;
+            output.AddComponent<BoatPresentationOverlay>();
             waves.SetPreset(OceanMotion.Subproject05.WavePreset.Calm);
             TrimLegacyUi(scene);
             EditorSceneManager.SaveScene(scene);AssetDatabase.Refresh();

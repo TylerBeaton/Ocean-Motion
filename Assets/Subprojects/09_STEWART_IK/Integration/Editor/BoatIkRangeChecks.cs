@@ -84,7 +84,7 @@ namespace OceanMotion.Subproject09.Integration.Editor
                 else if(stage==2 && elapsed>.1) {
                     if(!p.FreshCandidate() && elapsed<3)return;
                     p.Arm();Need(!p.Armed && p.Status.StartsWith("Settings changed:"),"Unprepared draft mismatch was not blocked");
-                    Need(p.SetPreparationSettings(200,5,.45f,.002f),"Draft settings failed");
+                    Need(p.SetPreparationSettings(200,5,.45f,.002f) && p.SetNextMovementSpeed(50),"Draft settings failed");
                     p.Arm();p.OnMessageArrived("OI5,ARMED,"+Token(p)+",100,50");Need(!p.Armed,"Mismatched allowance armed");
                     p.OnMessageArrived("OI5,ARMED,"+Token(p)+",200,100");Need(!p.Armed,"Mismatched speed armed");
                     p.OnMessageArrived("OI5,ARMED,"+Token(p)+",200,50");Need(p.Armed,"200us arm failed: "+p.Status);

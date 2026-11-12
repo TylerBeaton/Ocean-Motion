@@ -26,6 +26,11 @@ namespace OceanMotion.Subproject09.Integration.Editor
             EditorSceneManager.SaveScene(scene,destination,true);scene=EditorSceneManager.OpenScene(destination);
             var probe=UnityEngine.Object.FindFirstObjectByType<IndividualIkSweepProbe>();
             var preview=probe.Preview;var boat=probe.boatSource;probe.boatSource=null;
+            var overlay=probe.GetComponent<BoatPresentationOverlay>();
+            if(overlay) {
+                UnityEngine.Object.DestroyImmediate(overlay);
+                preview.viewCamera.orthographicSize=.22f;
+            }
             UnityEngine.Object.DestroyImmediate(boat);
             foreach(var root in scene.GetRootGameObjects())
                 if(root!=probe.transform.root.gameObject && root!=preview.transform.root.gameObject && root!=preview.viewCamera.transform.root.gameObject)

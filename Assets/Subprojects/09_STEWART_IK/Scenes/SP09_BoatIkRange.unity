@@ -255,6 +255,7 @@ GameObject:
   - component: {fileID: 408586306}
   - component: {fileID: 408586305}
   - component: {fileID: 408586304}
+  - component: {fileID: 408586307}
   m_Layer: 0
   m_Name: Expanded individual IK range - USB OFF until Connect
   m_TagString: Untagged
@@ -262,6 +263,18 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &408586307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 408586303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97314d9a3f47407dbb834b1cac4d8fa1, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::OceanMotion.Subproject09.Integration.BoatPresentationOverlay
 --- !u!114 &408586304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -867,13 +880,13 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.27
+    x: 0
     y: 0
-    width: 0.35
+    width: 1
     height: 1
   near clip plane: 0.1
   far clip plane: 200
-  field of view: 50
+  field of view: 63
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -1209,7 +1222,7 @@ Camera:
   far clip plane: 5
   field of view: 60
   orthographic: 1
-  orthographic size: 0.22
+  orthographic size: 0.145
   m_Depth: 10
   m_CullingMask:
     serializedVersion: 2

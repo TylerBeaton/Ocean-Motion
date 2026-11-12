@@ -30,7 +30,12 @@ namespace OceanMotion.Subproject09.Integration
         private void Awake()
         {
             probe=GetComponent<IndividualIkSweepProbe>();
-            if(!probe)return;
+            if(probe && !GetComponent<BoatPresentationOverlay>()) StartRecording();
+        }
+
+        public void StartRecording()
+        {
+            if(!probe || writer!=null)return;
             OpenFile("session");
             if(writer==null)return;
             Application.logMessageReceived+=OnLog;
@@ -117,12 +122,15 @@ namespace OceanMotion.Subproject09.Integration
             try { old?.Dispose(); } catch { /* Logging failures must not interrupt motion handling. */ }
             Debug.LogWarning("IK session recording stopped: "+error.Message,this);
         }
-        private void OnDestroy()
+        public void CloseRecording()
         {
-            EndRun("Play stopped / component destroyed");
-            Capture("session ended");Application.logMessageReceived-=OnLog;
+            EndRun("Recording closed");
+            Capture("session ended");
+            Application.logMessageReceived-=OnLog;
             try { writer?.Dispose(); } catch { }
             writer=null;
+            FilePath=null;
         }
+        private void OnDestroy() => CloseRecording();
     }
 }

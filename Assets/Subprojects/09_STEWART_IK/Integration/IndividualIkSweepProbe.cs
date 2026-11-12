@@ -39,12 +39,12 @@ namespace OceanMotion.Subproject09.Integration
         private ulong sourceSeq;
         private bool sourceAdvanced;
         public bool Preparing { get; private set; }
-        public int NextPulseAllowanceUs { get; private set; }=200;
-        public int NextPoseAllowanceDegrees { get; private set; }=8;
-        public float NextRotationGain { get; private set; }=.4f;
-        public float NextHeaveGain { get; private set; }=.002f;
+        public int NextPulseAllowanceUs { get; private set; }=500;
+        public int NextPoseAllowanceDegrees { get; private set; }=10;
+        public float NextRotationGain { get; private set; }=.9f;
+        public float NextHeaveGain { get; private set; }=.0125f;
         public int MovementSpeedUsPerSecond { get; private set; }=50;
-        public int NextMovementSpeedUsPerSecond { get; private set; }=50;
+        public int NextMovementSpeedUsPerSecond { get; private set; }=500;
         public int NextWaveTransitionSeconds { get; private set; }=2;
         public int WaveTransitionSeconds { get; private set; }=2;
         public bool SetNextWaveTransition(int seconds)
@@ -97,23 +97,42 @@ namespace OceanMotion.Subproject09.Integration
         }
         private bool preparationCalibrated;
         private double preparationAt,preparationDeadline;
-        // Draft settings apply together only after neutral; never arms or starts waves.
+        public bool SimulationMode { get; private set; }
+        public bool CanStartSimulation => isActiveAndEnabled && IsExtended && boatSource && boatSource.waves &&
+            !SimulationMode && !Preparing && !Armed && !pendingArm && !pendingHome && !homing &&
+            (!ShowOutputControls || (connected && Ready && DurationInputValid));
+        internal bool WaitingForSimulationArm => SimulationMode && (Preparing || pendingArm);
+
+        public void StartSimulation()
+        {
+            if(!CanStartSimulation)return;
+            GetComponent<IkSessionLogger>()?.CloseRecording();
+            BeginPreparation(true);
+        }
+
         public void PrepareBoatTest()
         {
-            if(!DurationInputValid || !boatSource || !boatSource.waves || !IsExtended || !Ready || pendingArm || pendingHome || homing)return;
+            if(SimulationMode || Preparing || !DurationInputValid || !boatSource || !boatSource.waves || !IsExtended || !Ready || pendingArm || pendingHome || homing)return;
+            GetComponent<IkSessionLogger>()?.StartRecording();
+            BeginPreparation(false);
+        }
+        private void BeginPreparation(bool simulation)
+        {
             WaveTransitionSeconds=NextWaveTransitionSeconds;
             boatSource.SelectWavePreset(WavePreset.Calm);boatSource.Resume();
             if(Armed || !Zero(BoardOffsets))Home();
+            SimulationMode=simulation;
             Preparing=true;preparationCalibrated=false;preparationAt=Now+WaveTransitionSeconds+3;preparationDeadline=Now+15;
             pulseDropdown=angleDropdown=speedDropdown=false;
-            Status="Preparing: Calm / gradual neutral / settling; no automatic Arm";
+            Status=simulation ? "Preparing simulation • Calm" : "Preparing: Calm / gradual neutral / settling; no automatic Arm";
         }
         private void UpdatePreparation()
         {
             if(!Preparing)return;
-            if(!Ready || !boatSource || !boatSource.waves || !boatSource.isActiveAndEnabled || boatSource.paused ||
+            bool offlineSimulation=SimulationMode && !ShowOutputControls;
+            if((!Ready && !offlineSimulation) || !boatSource || !boatSource.waves || !boatSource.isActiveAndEnabled || boatSource.paused ||
                 boatSource.waves.ActivePresetName!=WavePreset.Calm.ToString()) {
-                Preparing=false;Status="Preparation cancelled; select Prepare test again";return;
+                Preparing=SimulationMode=false;Status="Preparation cancelled; select Prepare test again";return;
             }
             if(Now>preparationDeadline) { Hold("Preparation timed out: source/board must settle at neutral");return; }
             if(Now<preparationAt || !CanConfigure)return;
@@ -126,7 +145,15 @@ namespace OceanMotion.Subproject09.Integration
                 Status="Preparing: calibrated Calm; waiting for fresh exact neutral";return;
             }
             if(!FreshCandidate() || !Zero(CandidateOffsets) || !TargetNeutral())return;
-            Preparing=false;Status="Prepared: rotation"+NextRotationGain.ToString("F2")+" / heave"+NextHeaveGain.ToString("F3")+
+            Preparing=false;
+            if(SimulationMode) {
+                if(ShowOutputControls) {
+                    RequestArm();
+                    if(!pendingArm)SimulationMode=false;
+                } else Status="Simulation running • USB off";
+                return;
+            }
+            Status="Prepared: rotation"+NextRotationGain.ToString("F2")+" / heave"+NextHeaveGain.ToString("F3")+
                 " / ±"+NextPoseAllowanceDegrees+"° / ±"+NextPulseAllowanceUs+"us / "+MovementSpeedUsPerSecond+"us/s. Click ARM, then choose waves.";
             GetComponent<IkSessionLogger>()?.Capture("Boat test prepared; manual Arm required");
         }
@@ -155,7 +182,7 @@ namespace OceanMotion.Subproject09.Integration
         {
             CancelTimer();
             GetComponent<IkSessionLogger>()?.EndRun("Connection changed");
-            Preparing=false;
+            Preparing=SimulationMode=false;
             if(boatSource)boatSource.ResetPoseAllowance();
             AllowanceUs=25; MovementSpeedUsPerSecond=50; connected=value; Ready=Armed=pendingArm=pendingHome=homing=haveAck=false;
             sourceSeq=0; sourceAdvanced=false; seq=lastAck=0;
@@ -170,7 +197,7 @@ namespace OceanMotion.Subproject09.Integration
         public void Hold(string reason="User HOLD")
         {
             CancelTimer();
-            Preparing=false;
+            Preparing=SimulationMode=false;
             Armed=pendingArm=pendingHome=homing=false; LastStop=reason;
             Send("HOLD"); Status="HOLD: "+reason;
             GetComponent<IkSessionLogger>()?.EndRun(reason);
@@ -179,7 +206,7 @@ namespace OceanMotion.Subproject09.Integration
         public void Home()
         {
             CancelTimer();
-            Preparing=false;
+            Preparing=SimulationMode=false;
             if (!Ready) return;
             GetComponent<IkSessionLogger>()?.EndRun("Gradual neutral requested");
             Armed=pendingArm=homing=false; pendingHome=true; deadline=Now+.25;
@@ -188,7 +215,7 @@ namespace OceanMotion.Subproject09.Integration
         public void Off()
         {
             CancelTimer();
-            Preparing=false;
+            Preparing=SimulationMode=false;
             Armed=pendingArm=pendingHome=homing=false; Send("OFF"); Status="PWM OFF requested; support plate";
             GetComponent<IkSessionLogger>()?.EndRun("PWM OFF requested");
         }
@@ -223,7 +250,12 @@ namespace OceanMotion.Subproject09.Integration
         }
         public void Arm()
         {
-            if(Preparing)return;
+            if(Preparing || SimulationMode)return;
+            RequestArm();
+            if(pendingArm)GetComponent<IkSessionLogger>()?.StartRecording();
+        }
+        private void RequestArm()
+        {
             if(boatSource && !DurationInputValid) { Status="Enter a valid test duration before Arm";return; }
             if(boatSource && IsExtended && (AllowanceUs!=NextPulseAllowanceUs || boatSource.PoseAngleAllowance!=NextPoseAllowanceDegrees ||
                 Mathf.Abs(boatSource.RotationGain-NextRotationGain)>.00001f || Mathf.Abs(boatSource.TranslationGain-NextHeaveGain)>.00001f || MovementSpeedUsPerSecond!=NextMovementSpeedUsPerSecond || WaveTransitionSeconds!=NextWaveTransitionSeconds)) {
@@ -278,7 +310,8 @@ namespace OceanMotion.Subproject09.Integration
                 (!IsExtended || (int.TryParse(f[4],out int speedEcho) && speedEcho==MovementSpeedUsPerSecond))) {
                 pendingArm=false; Armed=true; seq=lastAck=0; haveAck=false; ackAt=Now; nextSend=0; LastStop=null; Status="ARMED • six independent provisional IK commands";
                 MotionStarted=false;motionStoppedAt=-1;RunDurationSeconds=boatSource && IsExtended ? TestDurationSeconds : 0;
-                GetComponent<IkSessionLogger>()?.BeginRun();
+                if(SimulationMode)Status="Simulation running • platform armed";
+                else GetComponent<IkSessionLogger>()?.BeginRun();
             }
             else if(f[1]=="ACK" && Armed && f.Length==10 && uint.TryParse(f[3],out uint ack) && ack>0 && ack<=seq && (!haveAck || ack>lastAck) && ReadSix(f,4,out int[] actual)) {
                 BoardOffsets=actual; if(Array.Exists(actual,x=>Math.Abs(x)>AllowanceUs)) { Hold("Board exceeded selected allowance"); return; } lastAck=ack; haveAck=true; ackAt=Now;
@@ -287,7 +320,7 @@ namespace OceanMotion.Subproject09.Integration
             else if(f[1]=="NEUTRAL" && f.Length==3 && homing) { homing=false; BoardOffsets=new int[6]; Status="Board commanded neutral; observe before Arm"; }
             else if((f[1]=="ERR" || f[1]=="WATCHDOG" || f[1]=="HOLD" || f[1]=="OFF")) {
                 CancelTimer();
-                Preparing=false;
+                Preparing=SimulationMode=false;
                 Armed=pendingArm=pendingHome=homing=false;
                 if(f[1]=="OFF")BoardOffsets=new int[6];
                 if(f[1]=="ERR") { Ready=false; nextHello=Now+1; }
@@ -299,7 +332,7 @@ namespace OceanMotion.Subproject09.Integration
         private void DrawPreparationSettings()
         {
             GUI.enabled=!Preparing && !pendingArm && !pendingHome && !homing;
-            GUILayout.Label("NEXT TEST • applied by Prepare, not while running");
+            GUILayout.Label("Next test");
             if(GUILayout.Button("Pulse allowance: ±"+NextPulseAllowanceUs+" µs ▾")) { pulseDropdown=!pulseDropdown;angleDropdown=speedDropdown=false; }
             if(pulseDropdown) {
                 string[] labels=new string[20];for(int i=0;i<20;i++)labels[i]="±"+((i+1)*25);
@@ -323,20 +356,63 @@ namespace OceanMotion.Subproject09.Integration
                 int index=GUILayout.SelectionGrid(NextMovementSpeedUsPerSecond/50-1,labels,5);
                 if(index!=NextMovementSpeedUsPerSecond/50-1) { SetNextMovementSpeed((index+1)*50);speedDropdown=false; }
             }
-            GUILayout.Label("Neutral return: fixed 50 µs/s. Speed ceiling is provisional.");
+            GUILayout.Label("Neutral return 50 µs/s");
             GUILayout.Label("Wave transition: "+NextWaveTransitionSeconds+" seconds");
             int transition=GUILayout.Toolbar(NextWaveTransitionSeconds-1,new[]{"1s","2s","3s"})+1;
             if(transition!=NextWaveTransitionSeconds)SetNextWaveTransition(transition);
             GUI.enabled=!Armed && !Preparing && !pendingArm && !pendingHome && !homing;
-            GUILayout.Label("Test duration (seconds; 0 = manual stop)");
+            GUILayout.Label("Duration (s) • 0 for manual stop");
             string text=GUILayout.TextField(durationText);
             if(text!=durationText)SetTestDuration(text);
             if(!DurationInputValid)GUILayout.Label("Enter 1–3600 seconds, or 0 for manual. Decimals use a dot.");
-            GUI.enabled=DurationInputValid && Ready && !pendingArm && !pendingHome && !homing && !Preparing;
+            GUI.enabled=!SimulationMode && DurationInputValid && Ready && !pendingArm && !pendingHome && !homing && !Preparing;
             if(GUILayout.Button("Prepare test"))PrepareBoatTest();GUI.enabled=true;
         }
+        internal bool ShowOutputControls => connected || (serial && serial.enabled);
+
+        internal void DrawBoatConnection()
+        {
+            GUI.enabled=!ShowOutputControls && !SimulationMode;
+            portName=GUILayout.TextField(portName);
+            if(GUILayout.Button("Connect USB (PWM off)")) Connect();
+            GUI.enabled=true;
+            if(ShowOutputControls && GUILayout.Button("Disconnect USB")) Disconnect();
+            DrawPreparationSettings();
+            GUI.enabled=!SimulationMode && DurationInputValid && Ready && !Armed && !pendingArm && !pendingHome && !homing && !Preparing;
+            if(GUILayout.Button("Arm at Calm + neutral")) Arm();
+            GUI.enabled=true;
+            GUILayout.Label("Target µs   "+Vector(CandidateOffsets));
+            GUILayout.Label("Board µs    "+Vector(BoardOffsets));
+            var logger=GetComponent<IkSessionLogger>();
+            if(logger && !string.IsNullOrEmpty(logger.FilePath))
+                GUILayout.Label(System.IO.Path.GetFileName(logger.FilePath));
+        }
+
+        internal void StopSimulation()
+        {
+            if(!SimulationMode) return;
+            if(ShowOutputControls) StopTest("Simulation stopped");
+            else {
+                boatSource.PauseAtNeutral();
+                Status="Simulation stopped";
+            }
+        }
+
+        internal void DrawBoatOutput()
+        {
+            if(!ShowOutputControls) return;
+            if(TimerRunning) GUILayout.Label($"Auto-stop in {Math.Max(0,RunDurationSeconds-MotionElapsedSeconds):F1} s");
+            if(!SimulationMode && GUILayout.Button("Stop + save / gradual neutral")) StopTest();
+            GUILayout.BeginHorizontal();
+            if(GUILayout.Button("Hold")) Hold();
+            if(GUILayout.Button("Neutral")) Home();
+            GUILayout.EndHorizontal();
+            if(GUILayout.Button("PWM off • support plate")) Off();
+        }
+
         private void OnGUI()
         {
+            if (Preview && Preview.HasPresentationOverlay) return;
             GUILayout.BeginArea(new Rect(Screen.width-395,12,383,Mathf.Min(Screen.height-24,900)),GUI.skin.box);
             GUILayout.Label(boatSource ? "BOAT → INDIVIDUAL IK" : "INDIVIDUAL IK • STATIC SWEEP");
             panelScroll=GUILayout.BeginScrollView(panelScroll);
@@ -351,7 +427,7 @@ namespace OceanMotion.Subproject09.Integration
             if(boatSource && IsExtended) {
                 DrawPreparationSettings();
             }
-            GUI.enabled=DurationInputValid && Ready && !Armed && !pendingArm && !pendingHome && !homing && !Preparing;
+            GUI.enabled=!SimulationMode && DurationInputValid && Ready && !Armed && !pendingArm && !pendingHome && !homing && !Preparing;
             if(GUILayout.Button(boatSource ? "ARM at Calm + board neutral" : "ARM at cube + board neutral"))Arm(); GUI.enabled=true;
             if(!boatSource || !IsExtended) {
             GUI.enabled=CanConfigure && !Preparing;

@@ -22,6 +22,7 @@ namespace OceanMotion.Subproject09.Preview
         public string ExternalStatus { get; private set; }
         public Action PauseExternal, ResumeExternal, DrawExternalControls;
         public bool ShowExternalTransportControls { get; set; }=true;
+        public bool HasPresentationOverlay { get; set; }
         private bool externalValid;
         private PreviewGeometry data;
         private RotaryStewartModel model;
@@ -189,6 +190,7 @@ namespace OceanMotion.Subproject09.Preview
         }
         private void OnGUI()
         {
+            if (HasPresentationOverlay) return;
             GUI.skin.label.wordWrap=true;
             GUILayout.BeginArea(new Rect(12,12,340,Screen.height-24),GUI.skin.box);
             GUILayout.Label("OCEAN MOTION / SP09",new GUIStyle(GUI.skin.label){fontSize=20,fontStyle=FontStyle.Bold});
