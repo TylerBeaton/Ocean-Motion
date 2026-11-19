@@ -1,0 +1,7 @@
+{
+    "name": "OceanMotion.Subproject10",
+    "rootNamespace": "OceanMotion.Subproject10",
+    "references": [
+        "OceanMotion.Subproject05"
+    ]
+}
